@@ -1,0 +1,896 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Robbie's Bar Mitzvah · RSVP</title>
+<meta name="description" content="RSVP for Robbie's Bar Mitzvah in Jerusalem and Passover in Tel Aviv, April 2027.">
+<meta name="theme-color" content="#464920">
+<link rel="icon" type="image/png" href="img/favicon.png">
+<link rel="apple-touch-icon" href="img/apple-touch-icon.png">
+<meta property="og:title" content="Robbie's Bar Mitzvah">
+<meta property="og:description" content="Jerusalem & Tel Aviv · April 2027">
+<meta property="og:image" content="img/icon-512.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700&family=DM+Serif+Display&family=Frank+Ruhl+Libre:wght@700&family=Lora:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header class="hero">
+  <img class="logo" src="img/rjd-olive.png" alt="RJD monogram" width="900" height="645">
+  <p class="fullname">Robert Joseph Dabah</p>
+  <p class="place">Israel · Pesach 2027</p>
+  <p class="hebrew" lang="he" dir="rtl">ראובן יוסף</p>
+</header>
+<div class="band">
+  <h1>Robbie's Bar Mitzvah</h1>
+  <p class="when">Jerusalem · Monday, April 19 &nbsp;|&nbsp; Passover in Tel Aviv · April 21–29</p>
+  <p class="host">Hosted by Danielle &amp; Mac Dabah</p>
+</div>
+
+<main>
+  <div id="noInvite" class="banner warn hidden" style="margin-top:28px">This page needs your personal invitation link. Please open the link Danielle or Mac sent you, or reach out to them for a new one.</div>
+
+  <div id="wizard" class="hidden">
+
+    <!-- ===== Welcome ===== -->
+    <section class="card step" data-step="welcome" style="margin-top:-36px;position:relative">
+      <p class="step-label" id="greeting">You're invited</p>
+      <h2>Celebrate with us in Israel</h2>
+      <p class="lede">Robbie becomes a Bar Mitzvah in Jerusalem on the Monday before Passover, and the celebrations continue in Tel Aviv. Here's the full schedule, so you can decide how much of it you'd like to join.</p>
+      <h3 class="section-title">The Bar Mitzvah celebrations</h3>
+      <ul class="schedule" id="celebrationList"></ul>
+      <div class="passover-box">
+        <h3>Passover in Tel Aviv · April 21–29</h3>
+        <p>We're staying on at the David InterContinental for the holiday. Join us for all of it, the first half, or the second half.</p>
+      </div>
+      <ul class="schedule" id="passoverList" style="margin-top:8px"></ul>
+      <p id="moneyNote" class="hint hidden" style="font-size:17px;margin-top:18px"></p>
+      <p style="margin:22px 0 0">This RSVP takes about five minutes. Once it’s sent, if anything changes, just text Danielle or Mac.</p>
+      <div class="step-nav"><span class="spacer"></span><button type="button" class="btn" data-next>Start my RSVP</button></div>
+    </section>
+
+    <!-- ===== Step 1 · Contact ===== -->
+    <section class="card step" data-step="contact">
+      <div class="progress" data-progress></div>
+      <p class="step-label">Step 1 of 6</p>
+      <h2><span class="ico">👋</span> Your details</h2>
+      <p class="lede">The main contact for your family.</p>
+      <div class="field">
+        <label for="household_name">Family name <span class="req">*</span></label>
+        <input type="text" id="household_name" maxlength="120" placeholder="e.g. The Harari Family">
+      </div>
+      <div class="field">
+        <label for="contact_name">Your full name <span class="req">*</span></label>
+        <input type="text" id="contact_name" maxlength="120" autocomplete="name">
+      </div>
+      <div class="grid2">
+        <div class="field">
+          <label for="email">Email <span class="req">*</span></label>
+          <input type="email" id="email" maxlength="200" autocomplete="email">
+        </div>
+        <div class="field">
+          <label for="phone">Mobile phone <span class="req">*</span></label>
+          <input type="tel" id="phone" maxlength="40" autocomplete="tel" placeholder="+1 917 555 0100">
+        </div>
+      </div>
+      <hr class="rule">
+      <div class="field">
+        <span class="label">Will you be joining us? <span class="req">*</span></span>
+        <div class="choices" data-group="attending">
+          <button type="button" class="choice" data-value="yes"><span class="dot"></span>Yes, we'll be there</button>
+          <button type="button" class="choice" data-value="maybe"><span class="dot"></span>Hoping to, still figuring it out</button>
+          <button type="button" class="choice" data-value="no"><span class="dot"></span>Sadly, we can't make it</button>
+        </div>
+      </div>
+      <div class="field hidden" id="declineBox">
+        <label for="decline_note">We'll miss you. Would you like to leave a note or a mazal tov for Robbie and the family?</label>
+        <textarea id="decline_note" maxlength="3000" placeholder="Optional"></textarea>
+      </div>
+      <div class="step-nav"><button type="button" class="btn secondary" data-back>Back</button><button type="button" class="btn" data-next id="contactNext">Next: your party</button></div>
+      <p class="error-msg hidden" id="declineError"></p>
+    </section>
+
+    <!-- ===== Step 2 · Party ===== -->
+    <section class="card step" data-step="party">
+      <div class="progress" data-progress></div>
+      <p class="step-label">Step 2 of 6</p>
+      <h2><span class="ico">👨‍👩‍👧‍👦</span> Who's in your party</h2>
+      <p class="lede">List everyone traveling with you, including yourself. Add an email and mobile for anyone who has their own, kids included. Later, everyone with an email will get their own login to the trip app.</p>
+      <span class="label">Adults</span>
+      <div id="adults"></div>
+      <button type="button" class="add-btn" id="addAdult">＋ Add an adult</button>
+      <hr class="rule">
+      <span class="label">Children</span>
+      <div id="kids"></div>
+      <button type="button" class="add-btn" id="addKid">＋ Add a child</button>
+      <p class="party-total" id="partyTotal"></p>
+      <div class="step-nav"><button type="button" class="btn secondary" data-back>Back</button><button type="button" class="btn" data-next>Next: your dates</button></div>
+    </section>
+
+    <!-- ===== Step 3 · Dates ===== -->
+    <section class="card step" data-step="dates">
+      <div class="progress" data-progress></div>
+      <p class="step-label">Step 3 of 6</p>
+      <h2><span class="ico">🗓️</span> Your dates</h2>
+      <div id="datesBody">
+        <div class="field">
+          <span class="label">Do you know your travel dates yet? <span class="req">*</span></span>
+          <div class="choices two" data-group="dates_known">
+            <button type="button" class="choice" data-value="yes"><span class="dot"></span>Yes</button>
+            <button type="button" class="choice" data-value="no"><span class="dot"></span>Not yet</button>
+          </div>
+        </div>
+        <div id="datesYes" class="hidden">
+          <div class="grid2">
+            <div class="field">
+              <label for="arrival_date">Arriving in Israel <span class="req">*</span></label>
+              <input type="date" id="arrival_date" min="2027-04-01" max="2027-05-15">
+            </div>
+            <div class="field">
+              <label for="departure_date">Leaving Israel <span class="req">*</span></label>
+              <input type="date" id="departure_date" min="2027-04-01" max="2027-05-15">
+            </div>
+          </div>
+          <p class="hint" id="dateHint">Guests arrive in Jerusalem on Sunday, April 18. Passover ends Thursday night, April 29.</p>
+        </div>
+        <div id="datesNo" class="hidden">
+          <div class="field">
+            <span class="label">What are you planning? <span class="req">*</span></span>
+            <div class="choices two" data-group="trip_plan">
+              <button type="button" class="choice" data-value="bm_only"><span class="dot"></span>The Bar Mitzvah celebrations only</button>
+              <button type="button" class="choice" data-value="passover_full"><span class="dot"></span>Bar Mitzvah + all of Passover</button>
+              <button type="button" class="choice" data-value="passover_first"><span class="dot"></span>Bar Mitzvah + first half of Passover (about Apr 21–25)</button>
+              <button type="button" class="choice" data-value="passover_second"><span class="dot"></span>Bar Mitzvah + second half of Passover (about Apr 25–29)</button>
+              <button type="button" class="choice" data-value="unsure"><span class="dot"></span>Not sure yet</button>
+            </div>
+          </div>
+          <div class="field hidden" id="interestField">
+            <span class="label">Would you be interested in staying for Passover in Tel Aviv? <span class="req">*</span></span>
+            <div class="choices" data-group="passover_interest">
+              <button type="button" class="choice" data-value="yes"><span class="dot"></span>Yes</button>
+              <button type="button" class="choice" data-value="maybe"><span class="dot"></span>Maybe</button>
+              <button type="button" class="choice" data-value="no"><span class="dot"></span>No</button>
+            </div>
+          </div>
+        </div>
+        <hr class="rule">
+        <div class="field">
+          <span class="label">Flights booked?</span>
+          <div class="choices two" data-group="flights_booked">
+            <button type="button" class="choice" data-value="yes"><span class="dot"></span>Yes</button>
+            <button type="button" class="choice" data-value="no"><span class="dot"></span>Not yet</button>
+          </div>
+        </div>
+        <div class="field">
+          <label for="flight_notes">Flight details</label>
+          <textarea id="flight_notes" maxlength="1000" placeholder="Airline, flight number and arrival time, or anything you know so far"></textarea>
+        </div>
+        <div class="field">
+          <span class="label">Airport VIP service &amp; transfers</span>
+          <div class="choices" data-group="wants_transfer">
+            <button type="button" class="choice" data-value="yes"><span class="dot"></span>Yes, please book for us</button>
+            <button type="button" class="choice" data-value="no"><span class="dot"></span>No, we'll handle it</button>
+            <button type="button" class="choice" data-value="unsure"><span class="dot"></span>Not sure yet</button>
+          </div>
+          <p class="hint" id="transferHint">VIP meet-and-greet through the airport plus a private car to the hotel, arriving and departing.</p>
+        </div>
+      </div>
+      <div class="step-nav"><button type="button" class="btn secondary" data-back>Back</button><button type="button" class="btn" data-next id="datesNext">Next: hotels</button></div>
+    </section>
+
+    <!-- ===== Step 4 · Hotels ===== -->
+    <section class="card step" data-step="hotels">
+      <div class="progress" data-progress></div>
+      <p class="step-label">Step 4 of 6</p>
+      <h2><span class="ico">🏨</span> Hotels</h2>
+      <p class="lede" id="hotelLede"></p>
+      <div id="hotelBlocks"></div>
+      <div class="field hidden" id="adjoinField">
+        <span class="label">Do your rooms need to be adjoining?</span>
+        <div class="choices" data-group="rooms_adjoining">
+          <button type="button" class="choice" data-value="yes"><span class="dot"></span>Yes, they need to connect</button>
+          <button type="button" class="choice" data-value="preferred"><span class="dot"></span>Would be nice</button>
+          <button type="button" class="choice" data-value="no"><span class="dot"></span>Doesn't matter</button>
+        </div>
+      </div>
+      <div class="field">
+        <label for="room_notes">Anything else about your rooms?</label>
+        <textarea id="room_notes" maxlength="1000" placeholder="Cribs, rollaway beds, high or low floor, accessibility"></textarea>
+      </div>
+      <div class="step-nav"><button type="button" class="btn secondary" data-back>Back</button><button type="button" class="btn" data-next>Next: events</button></div>
+    </section>
+
+    <!-- ===== Step 5 · Events ===== -->
+    <section class="card step" data-step="events">
+      <div class="progress" data-progress></div>
+      <p class="step-label">Step 5 of 6</p>
+      <h2><span class="ico">🎉</span> Which events will you join?</h2>
+      <p class="lede">For each one, choose <strong>Everyone</strong>, <strong>Some of us</strong> (then tell us how many), or <strong>Skip</strong>.</p>
+      <div class="key hidden" id="costKey">
+        <span class="hosted">🎁 Hosted</span>
+        <span class="pp" id="keyPP">🧾 Per-person price to follow</span>
+      </div>
+      <div class="quick">
+        <p>Your whole party is coming to everything listed?</p>
+        <button type="button" class="btn secondary" id="allEverything">We're in for everything</button>
+      </div>
+      <div id="eventsList"></div>
+      <div class="step-nav"><button type="button" class="btn secondary" data-back>Back</button><button type="button" class="btn" data-next>Next: review</button></div>
+    </section>
+
+    <!-- ===== Step 6 · Review ===== -->
+    <section class="card step review" data-step="review">
+      <div class="progress" data-progress></div>
+      <p class="step-label">Step 6 of 6</p>
+      <h2><span class="ico">✅</span> Review &amp; send</h2>
+      <div id="reviewBody"></div>
+      <hr class="rule">
+      <div class="field">
+        <label for="notes">Questions or notes for us</label>
+        <textarea id="notes" maxlength="3000" placeholder="Anything we should know"></textarea>
+      </div>
+      <div class="step-nav"><button type="button" class="btn secondary" data-back>Back</button><button type="button" class="btn" id="submitBtn">Send my RSVP</button></div>
+      <p class="error-msg hidden" id="submitError"></p>
+    </section>
+
+    <p class="error-msg hidden" id="stepError" style="text-align:center"></p>
+  </div>
+
+  <!-- ===== Event-only invite (short form) ===== -->
+  <section class="card hidden" id="eventOnly" style="margin-top:-36px;position:relative">
+    <p class="step-label">You're invited</p>
+    <h2 id="eoTitle">Please join us</h2>
+    <p class="lede" id="eoLede"></p>
+    <div id="eoEvents"></div>
+    <hr class="rule">
+    <div class="field">
+      <label for="eo_name">Your name <span class="req">*</span></label>
+      <input type="text" id="eo_name" maxlength="120" autocomplete="name">
+    </div>
+    <div class="grid2">
+      <div class="field"><label for="eo_phone">Mobile</label><input type="tel" id="eo_phone" maxlength="40" autocomplete="tel"></div>
+      <div class="field"><label for="eo_email">Email</label><input type="email" id="eo_email" maxlength="200" autocomplete="email"></div>
+    </div>
+    <p class="hint" style="margin-top:-8px">Optional, just in case we need to reach you.</p>
+    <div class="field" style="margin-top:18px">
+      <label for="eo_notes">A note for Robbie and the family, or anything we should know</label>
+      <textarea id="eo_notes" maxlength="3000"></textarea>
+    </div>
+    <div class="step-nav"><span class="spacer"></span><button type="button" class="btn" id="eoSubmit">Send my RSVP</button></div>
+    <p class="error-msg hidden" id="eoError"></p>
+  </section>
+
+  <section class="card thanks hidden" id="thanks" style="margin-top:-36px;position:relative">
+    <h2><span class="ico">🎉</span> Thank you</h2>
+    <p id="thanksMsg">We've got your RSVP.</p>
+    <p>If anything changes, just text Danielle or Mac and they’ll update it for you.</p>
+  </section>
+
+  <section class="card review hidden" id="received" style="margin-top:-36px;position:relative">
+    <p class="step-label">Welcome back</p>
+    <h2><span class="ico">✅</span> We have your RSVP</h2>
+    <p class="lede">Here’s what you sent us. If anything changes, just text Danielle or Mac and they’ll update it for you.</p>
+    <div id="receivedBody"></div>
+  </section>
+</main>
+
+<footer>Questions? Reach out to Danielle or Mac anytime.</footer>
+
+<script>
+const SUPABASE_URL = 'https://khzwtkdzeygvbodtkovr.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_taprzRIuug3k_cv_4enseg_sr6SBBq1';
+const CODE_KEY = 'robbie_invite_code';
+const STEPS = ['welcome', 'contact', 'party', 'dates', 'hotels', 'events', 'review'];
+
+const HOTELS = {
+  jerusalem: {
+    key: 'hotel_jerusalem', name: 'King David Hotel', city: 'Jerusalem', dates: 'Sun, April 18 – Tue, April 20',
+    types: ['Deluxe Room, New City view', 'Deluxe Room, Old City view', 'Family Room (up to 4)', 'Garden Room', 'Junior Suite', 'Mini Suite', 'Executive Suite']
+  },
+  telaviv: {
+    key: 'hotel_telaviv', name: 'David InterContinental', city: 'Tel Aviv', dates: 'From Tue, April 20, through Passover',
+    types: ['Classic Room', 'Classic Room + child', 'Premium Executive Room', 'Premium Club Room', 'Jaffa Suite', 'Mediterranean Suite', 'Royal Suite', 'Presidential Suite']
+  }
+};
+const DAY_LABELS = {
+  '2027-04-18': 'Arrival · Jerusalem', '2027-04-19': 'Bar Mitzvah Day · Jerusalem', '2027-04-20': 'Desert day, then on to Tel Aviv',
+  '2027-04-21': 'Erev Pesach · Tel Aviv', '2027-04-22': 'First day of Passover', '2027-04-23': 'Second day of Passover · Shabbat begins',
+  '2027-04-24': 'Shabbat Chol Hamoed', '2027-04-25': 'Chol Hamoed', '2027-04-26': 'Chol Hamoed', '2027-04-27': 'Chol Hamoed · last days begin at night',
+  '2027-04-28': 'Seventh day of Passover', '2027-04-29': 'Last day of Passover · holiday ends at night'
+};
+
+const $ = (id) => document.getElementById(id);
+const state = { attending: null, dates_known: null, trip_plan: null, passover_interest: null, flights_booked: null, wants_transfer: null,
+  hotel_jerusalem: null, hotel_telaviv: null, rooms_adjoining: null, rooms: { jerusalem: [], telaviv: [] }, events: {} };
+let EVENTS = [];
+let inviteCode = null, hasRsvp = false, stepIdx = 0;
+let PAYS = { rooms: false, transfers: false, meals: false, activities: false };
+
+function rpc(fn, body) {
+  return fetch(`${SUPABASE_URL}/rest/v1/rpc/${fn}`, {
+    method: 'POST', headers: { apikey: SUPABASE_KEY, 'Content-Type': 'application/json' }, body: JSON.stringify(body)
+  }).then(async (r) => {
+    const data = await r.json().catch(() => null);
+    if (!r.ok) throw new Error((data && data.message) || 'Something went wrong');
+    return data;
+  });
+}
+function lsGet(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
+function lsSet(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
+function esc(s) { return String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); }
+function fmtShort(iso) { const d = new Date(iso + 'T12:00:00'); return d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }); }
+function fmtLong(iso) { const d = new Date(iso + 'T12:00:00'); return d.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' }); }
+function plural(n, one, many) { return `${n} ${n === 1 ? one : many}`; }
+
+/* ---------- money wording (only for families paying for something) ---------- */
+function anyPaid() { return PAYS.rooms || PAYS.transfers || PAYS.meals || PAYS.activities; }
+function joinList(a) { return a.length < 2 ? a.join('') : a.slice(0, -1).join(', ') + ' and ' + a[a.length - 1]; }
+function costLine(e) {
+  if (!anyPaid()) return '';
+  if (e.cost_type === 'hosted') return '<p class="cost hosted">🎁 Hosted</p>';
+  if (e.comp_category && PAYS[e.comp_category]) return '<p class="cost pp">🧾 Per-person price to follow</p>';
+  return '';
+}
+function applyWording() {
+  const paid = anyPaid();
+  $('costKey').classList.toggle('hidden', !paid);
+  $('keyPP').classList.toggle('hidden', !(PAYS.meals || PAYS.activities));
+  if (paid) {
+    const items = [];
+    if (PAYS.meals && PAYS.activities) items.push('the Passover meals and activities you sign up for');
+    else if (PAYS.meals) items.push('the Passover meals you sign up for');
+    else if (PAYS.activities) items.push('the Passover activities you sign up for');
+    if (PAYS.rooms) items.push('your hotel rooms');
+    if (PAYS.transfers) items.push('airport VIP service and transfers');
+    $('moneyNote').textContent = `The Bar Mitzvah celebrations are hosted. Once the numbers are final, we’ll send you pricing for ${joinList(items)}. Nothing you choose here is a commitment yet.`;
+    $('moneyNote').classList.remove('hidden');
+  }
+  if (PAYS.transfers) $('transferHint').textContent = 'VIP meet-and-greet through the airport plus a private car to the hotel, arriving and departing. Priced per family.';
+}
+
+/* ---------- segmented choices ---------- */
+function clearErrors() { ['stepError', 'declineError'].forEach(id => $(id) && $(id).classList.add('hidden')); }
+document.addEventListener('input', (e) => { if (e.target.classList) e.target.classList.remove('invalid'); clearErrors(); });
+function setChoice(group, value) {
+  state[group] = value; clearErrors();
+  document.querySelectorAll(`.choices[data-group="${group}"]`).forEach(g => {
+    g.classList.remove('invalid');
+    g.querySelectorAll('.choice').forEach(b => b.setAttribute('aria-pressed', b.dataset.value === value ? 'true' : 'false'));
+  });
+  refreshDatesStep();
+}
+document.addEventListener('click', (e) => {
+  const b = e.target.closest('.choices[data-group] .choice'); if (!b) return;
+  setChoice(b.closest('.choices').dataset.group, b.dataset.value);
+});
+
+/* ---------- party ---------- */
+function addPerson(isChild, data = {}, isYou = false) {
+  const card = document.createElement('div');
+  card.className = 'person-card ' + (isChild ? 'child' : 'adult');
+  if (isYou) card.dataset.you = '1';
+  card.innerHTML = `
+    ${isYou ? '<p class="you">You</p>' : ''}
+    <div class="pc-top">
+      <div><label>Full name</label><input type="text" class="p-name" maxlength="120" value="${esc(data.full_name)}"></div>
+      ${isChild ? `<div><label>Age in Apr 2027</label><input type="number" class="p-age" min="0" max="25" inputmode="numeric" value="${data.age ?? ''}"></div>` : ''}
+      ${isYou ? '<span></span>' : '<button type="button" class="icon-btn" aria-label="Remove">✕</button>'}
+    </div>
+    <div class="pc-contact">
+      <div><label>Email${isChild ? ' (if they have one)' : ''}</label><input type="email" class="p-email" maxlength="200" value="${esc(data.email)}"></div>
+      <div><label>Mobile${isChild ? ' (if they have their own)' : ''}</label><input type="tel" class="p-phone" maxlength="40" value="${esc(data.phone)}"></div>
+    </div>`;
+  const rm = card.querySelector('.icon-btn');
+  if (rm) rm.onclick = () => { card.remove(); updateParty(); };
+  card.querySelectorAll('input').forEach(i => i.addEventListener('input', updateParty));
+  $(isChild ? 'kids' : 'adults').appendChild(card);
+  updateParty();
+  return card;
+}
+function getMembers() {
+  const out = [];
+  document.querySelectorAll('#adults .person-card, #kids .person-card').forEach(c => {
+    const n = c.querySelector('.p-name').value.trim(); if (!n) return;
+    const isChild = c.classList.contains('child');
+    const a = isChild ? c.querySelector('.p-age').value : '';
+    out.push({ full_name: n, is_child: isChild, age: a === '' ? null : parseInt(a, 10),
+      email: c.querySelector('.p-email').value.trim(), phone: c.querySelector('.p-phone').value.trim() });
+  });
+  return out;
+}
+function counts() { const m = getMembers(); return { adults: m.filter(x => !x.is_child).length, kids: m.filter(x => x.is_child).length }; }
+function updateParty() {
+  const c = counts(), t = c.adults + c.kids;
+  $('partyTotal').textContent = t ? `${plural(t, 'person', 'people')} · ${plural(c.adults, 'adult', 'adults')}, ${plural(c.kids, 'child', 'children')}` : '';
+  Object.entries(state.events).forEach(([id, r]) => {
+    if (r.choice === 'some') { r.adults = Math.min(r.adults, c.adults); r.kids = Math.min(r.kids, c.kids); renderSome(id); }
+  });
+}
+function syncYou() {
+  let you = document.querySelector('#adults .person-card[data-you]');
+  if (!you) you = addPerson(false, {}, true);
+  const set = (sel, v) => { const i = you.querySelector(sel); if (!i.value.trim() || i.dataset.auto === '1') { i.value = v; i.dataset.auto = '1'; } };
+  set('.p-name', $('contact_name').value.trim()); set('.p-email', $('email').value.trim()); set('.p-phone', $('phone').value.trim());
+  you.querySelectorAll('input').forEach(i => i.addEventListener('input', () => { i.dataset.auto = '0'; }, { once: true }));
+  updateParty();
+}
+$('addAdult').onclick = () => addPerson(false).querySelector('input').focus();
+$('addKid').onclick = () => addPerson(true).querySelector('input').focus();
+
+/* ---------- dates logic ---------- */
+function refreshDatesStep() {
+  const coming = state.attending && state.attending !== 'no';
+  $('declineBox').classList.toggle('hidden', state.attending !== 'no');
+  $('contactNext').textContent = state.attending === 'no' ? 'Send my RSVP' : 'Next: your party';
+  $('datesYes').classList.toggle('hidden', state.dates_known !== 'yes');
+  $('datesNo').classList.toggle('hidden', state.dates_known !== 'no');
+  $('interestField').classList.toggle('hidden', !(state.trip_plan === 'bm_only' || state.trip_plan === 'unsure'));
+  $('datesNext').textContent = state.attending === 'no' ? 'Next: review' : 'Next: hotels';
+}
+function stay() {
+  if (state.dates_known === 'yes' && $('arrival_date').value && $('departure_date').value)
+    return { from: $('arrival_date').value, to: $('departure_date').value };
+  return null;
+}
+function inPassover() {
+  const s = stay();
+  if (s) return s.to >= '2027-04-21';
+  if (['passover_full', 'passover_first', 'passover_second', 'unsure'].includes(state.trip_plan)) return true;
+  return state.trip_plan === 'bm_only' && (state.passover_interest === 'yes' || state.passover_interest === 'maybe');
+}
+function inJerusalem() { const s = stay(); return s ? (s.from <= '2027-04-20' && s.to >= '2027-04-18') : true; }
+
+/* ---------- hotels ---------- */
+function renderHotels() {
+  const show = { jerusalem: inJerusalem(), telaviv: inPassover() };
+  $('hotelLede').textContent = (PAYS.rooms
+    ? 'We’re holding a group block at both hotels. Rooms are booked through our planner and billed to you, and we’ll share rates separately.'
+    : 'We’re holding a group block at both hotels. Tell us what you’d like and we’ll take care of the booking.')
+    + (show.jerusalem && show.telaviv ? '' : ' We’re only showing the hotel that matches your dates.');
+  const wrap = $('hotelBlocks'); wrap.innerHTML = '';
+  ['jerusalem', 'telaviv'].forEach(h => {
+    if (!show[h]) return;
+    const H = HOTELS[h];
+    const div = document.createElement('div'); div.className = 'hotel-block'; div.id = 'hb-' + h;
+    div.innerHTML = `<h3>${H.name}, ${H.city}</h3><p class="hd">${H.dates}</p>
+      <span class="label">Would you like a room here?</span>
+      <div class="choices" data-group="${H.key}">
+        <button type="button" class="choice" data-value="yes"><span class="dot"></span>Yes, please</button>
+        <button type="button" class="choice" data-value="no"><span class="dot"></span>No, we have our own plans</button>
+        <button type="button" class="choice" data-value="unsure"><span class="dot"></span>Not sure yet</button>
+      </div>
+      <div class="room-builder hidden">
+        <div class="stepper" style="margin-bottom:14px"><span class="label">How many rooms?</span>
+          <button type="button" data-rooms="-1" aria-label="Fewer rooms">−</button><output>1</output>
+          <button type="button" data-rooms="1" aria-label="More rooms">＋</button></div>
+        <div class="room-rows"></div>
+      </div>`;
+    wrap.appendChild(div);
+    div.querySelectorAll('.choice').forEach(b => b.setAttribute('aria-pressed', state[H.key] === b.dataset.value ? 'true' : 'false'));
+    div.querySelectorAll('[data-rooms]').forEach(b => b.onclick = () => {
+      readRooms(); const list = state.rooms[h];
+      if (b.dataset.rooms === '1' && list.length < 8) list.push({ type: '', who: '' });
+      if (b.dataset.rooms === '-1' && list.length > 1) list.pop();
+      paintRooms(h);
+    });
+    paintRooms(h);
+  });
+}
+function paintRooms(h) {
+  const div = $('hb-' + h); if (!div) return;
+  const H = HOTELS[h], want = state[H.key] === 'yes' || state[H.key] === 'unsure';
+  div.querySelector('.room-builder').classList.toggle('hidden', !want);
+  if (want && !state.rooms[h].length) state.rooms[h].push({ type: '', who: '' });
+  div.querySelector('output').textContent = state.rooms[h].length;
+  div.querySelector('.room-rows').innerHTML = state.rooms[h].map((r, i) => `
+    <div class="room-row"><span class="rn">${i + 1}</span>
+      <select class="r-type" aria-label="Room ${i + 1} type">
+        <option value="">Room type…</option>
+        ${H.types.map(t => `<option ${r.type === t ? 'selected' : ''}>${esc(t)}</option>`).join('')}
+        <option value="Not sure, please suggest" ${r.type === 'Not sure, please suggest' ? 'selected' : ''}>Not sure, please suggest</option>
+      </select>
+      <input type="text" class="r-who" maxlength="200" placeholder="Who's in this room? (optional)" value="${esc(r.who)}">
+    </div>`).join('');
+  updateAdjoin();
+}
+function readRooms() {
+  ['jerusalem', 'telaviv'].forEach(h => {
+    const div = $('hb-' + h); if (!div) return;
+    state.rooms[h] = [...div.querySelectorAll('.room-row')].map(r => ({ type: r.querySelector('.r-type').value, who: r.querySelector('.r-who').value.trim() }));
+  });
+}
+function updateAdjoin() {
+  const multi = ['jerusalem', 'telaviv'].some(h => $('hb-' + h) && (state[HOTELS[h].key] === 'yes' || state[HOTELS[h].key] === 'unsure') && state.rooms[h].length > 1);
+  $('adjoinField').classList.toggle('hidden', !multi);
+}
+document.addEventListener('click', (e) => {
+  const g = e.target.closest('.hotel-block .choices'); if (!g) return;
+  readRooms(); paintRooms(g.closest('.hotel-block').id.slice(3));
+});
+
+/* ---------- events ---------- */
+function passoverWindow() {
+  const s = stay(); if (s) return s;
+  if (state.trip_plan === 'passover_first') return { from: '2027-04-01', to: '2027-04-25' };
+  if (state.trip_plan === 'passover_second') return { from: '2027-04-25', to: '2027-05-15' };
+  return null;
+}
+function visibleEvents() {
+  const w = passoverWindow(), pass = inPassover();
+  return EVENTS.filter(e => e.cost_type === 'hosted' || (pass && (!w || (e.event_date >= w.from && e.event_date <= w.to))));
+}
+function eventCard(e, s) {
+  const outside = s && (e.event_date < s.from || e.event_date > s.to);
+  return `<div class="event" id="ev-${e.id}">
+    <div class="event-top"><span class="emoji">${e.emoji}</span><div style="flex:1">
+      <p class="meta">${fmtLong(e.event_date)}${e.time_label ? ' · ' + esc(e.time_label) : ''}</p>
+      <h3>${esc(e.title)}</h3>
+      <p class="meta" style="color:var(--ink-soft)">${esc(e.place || '')}</p>
+      ${outside ? '<p class="outside">Outside your travel dates, but you’re welcome to join</p>' : ''}
+      <p class="desc">${esc(e.description)}</p>
+      ${costLine(e)}
+    </div></div>
+    <div class="choices" data-event="${e.id}">
+      <button type="button" class="choice" data-value="all"><span class="dot"></span>Everyone</button>
+      <button type="button" class="choice" data-value="some"><span class="dot"></span>Some of us</button>
+      <button type="button" class="choice" data-value="none"><span class="dot"></span>Skip</button>
+    </div>
+    <div class="some-box" id="some-${e.id}">
+      <div class="stepper"><span class="label">Adults</span><button type="button" data-k="adults" data-d="-1" aria-label="Fewer adults">−</button><output data-o="adults">0</output><button type="button" data-k="adults" data-d="1" aria-label="More adults">＋</button></div>
+      <div class="stepper"><span class="label">Kids</span><button type="button" data-k="kids" data-d="-1" aria-label="Fewer kids">−</button><output data-o="kids">0</output><button type="button" data-k="kids" data-d="1" aria-label="More kids">＋</button></div>
+    </div></div>`;
+}
+function renderEvents() {
+  const s = stay(), w = passoverWindow(), vis = visibleEvents();
+  const cel = vis.filter(e => e.cost_type === 'hosted'), pas = vis.filter(e => e.cost_type !== 'hosted');
+  let html = `<h3 class="section-title">The Bar Mitzvah celebrations</h3><p class="section-sub">April 18–26, in Jerusalem, the desert and Tel Aviv.</p>`
+    + cel.map(e => eventCard(e, s)).join('');
+  if (pas.length) {
+    html += `<hr class="rule"><h3 class="section-title">Passover in Tel Aviv</h3><p class="section-sub">At the David InterContinental${w ? ', for the part of the holiday you\u2019ll be with us' : ''}.</p>`;
+    let last = '';
+    pas.forEach(e => {
+      if (e.event_date !== last) { html += `<p class="step-label" style="margin-top:18px">${fmtLong(e.event_date)} · ${esc(DAY_LABELS[e.event_date] || '')}</p>`; last = e.event_date; }
+      html += eventCard(e, s);
+    });
+  }
+  $('eventsList').innerHTML = html;
+  Object.keys(state.events).forEach(paintEvent);
+}
+$('eventsList').addEventListener('click', (ev) => {
+  const c = ev.target.closest('.choices[data-event] .choice');
+  if (c) { setEvent(c.closest('.choices').dataset.event, c.dataset.value); return; }
+  const b = ev.target.closest('button[data-k]'); if (!b) return;
+  const id = b.closest('.some-box').id.slice(5), r = state.events[id], cn = counts();
+  const max = b.dataset.k === 'adults' ? cn.adults : cn.kids;
+  r[b.dataset.k] = Math.max(0, Math.min(max, r[b.dataset.k] + parseInt(b.dataset.d, 10)));
+  renderSome(id);
+});
+function setEvent(id, choice) {
+  const prev = state.events[id] || { adults: 0, kids: 0 };
+  if (choice === 'some' && prev.choice !== 'some') { const c = counts(); prev.adults = c.adults; prev.kids = c.kids; }
+  state.events[id] = { ...prev, choice };
+  paintEvent(id);
+}
+function paintEvent(id) {
+  const r = state.events[id], g = document.querySelector(`.choices[data-event="${id}"]`);
+  if (!g || !r) return;
+  g.classList.remove('invalid');
+  g.querySelectorAll('.choice').forEach(b => b.setAttribute('aria-pressed', b.dataset.value === r.choice ? 'true' : 'false'));
+  $('ev-' + id).classList.add('answered');
+  $('some-' + id).classList.toggle('show', r.choice === 'some');
+  renderSome(id);
+}
+function renderSome(id) {
+  const r = state.events[id], box = $('some-' + id); if (!box || !r) return;
+  box.querySelector('[data-o=adults]').textContent = r.adults;
+  box.querySelector('[data-o=kids]').textContent = r.kids;
+}
+$('allEverything').onclick = () => visibleEvents().forEach(e => setEvent(e.id, 'all'));
+
+/* ---------- validation per step ---------- */
+function validateStep(name) {
+  let first = null;
+  const bad = (el) => { el.classList.add('invalid'); first ||= el; };
+  document.querySelectorAll(`[data-step="${name}"] .invalid`).forEach(el => el.classList.remove('invalid'));
+  let msg = 'Please fill in the highlighted items.';
+  if (name === 'contact') {
+    ['household_name', 'contact_name', 'phone'].forEach(k => { if (!$(k).value.trim()) bad($(k)); });
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test($('email').value.trim())) bad($('email'));
+    if (!state.attending) bad(document.querySelector('.choices[data-group=attending]'));
+  }
+  if (name === 'party') {
+    const you = document.querySelector('#adults .person-card[data-you] .p-name');
+    if (you && !you.value.trim()) bad(you);
+    document.querySelectorAll('.p-email').forEach(i => { if (i.value.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(i.value.trim())) bad(i); });
+    document.querySelectorAll('#kids .person-card').forEach(c => { if (c.querySelector('.p-name').value.trim() && c.querySelector('.p-age').value === '') bad(c.querySelector('.p-age')); });
+  }
+  if (name === 'dates') {
+    if (state.attending !== 'no') {
+      if (!state.dates_known) bad(document.querySelector('.choices[data-group=dates_known]'));
+      if (state.dates_known === 'yes') {
+        const a = $('arrival_date'), d = $('departure_date');
+        if (!a.value) bad(a); if (!d.value) bad(d);
+        if (a.value && d.value && d.value < a.value) { bad(d); msg = 'Your departure date is before your arrival date.'; }
+      }
+      if (state.dates_known === 'no') {
+        if (!state.trip_plan) bad(document.querySelector('.choices[data-group=trip_plan]'));
+        if ((state.trip_plan === 'bm_only' || state.trip_plan === 'unsure') && !state.passover_interest) bad(document.querySelector('.choices[data-group=passover_interest]'));
+      }
+    }
+  }
+  if (name === 'hotels') {
+    ['jerusalem', 'telaviv'].forEach(h => {
+      const div = $('hb-' + h); if (!div) return;
+      if (!state[HOTELS[h].key]) bad(div.querySelector('.choices'));
+    });
+  }
+  if (name === 'events') {
+    const missing = visibleEvents().filter(e => !state.events[e.id]);
+    missing.forEach(e => bad(document.querySelector(`.choices[data-event="${e.id}"]`)));
+    if (missing.length) msg = `Almost there. ${plural(missing.length, 'event still needs', 'events still need')} an answer.`;
+  }
+  const err = $('stepError');
+  if (first) {
+    first.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    err.textContent = msg; err.classList.remove('hidden');
+    return false;
+  }
+  err.classList.add('hidden');
+  return true;
+}
+
+/* ---------- navigation ---------- */
+function skip(name) {
+  if (state.attending === 'no' && (name === 'hotels' || name === 'events')) return true;
+  return false;
+}
+function show(idx) {
+  stepIdx = idx;
+  const name = STEPS[idx];
+  if (name === 'party') syncYou();
+  if (name === 'hotels') renderHotels();
+  if (name === 'events') renderEvents();
+  if (name === 'review') renderReview();
+  document.querySelectorAll('.step').forEach(s => s.classList.toggle('active', s.dataset.step === name));
+  document.querySelectorAll('[data-progress]').forEach(p => {
+    p.innerHTML = STEPS.slice(1).map((s, i) => `<span class="seg ${i + 1 < idx ? 'done' : i + 1 === idx ? 'current' : ''}"></span>`).join('');
+  });
+  $('stepError').classList.add('hidden');
+  window.scrollTo({ top: document.querySelector('.band').offsetTop + document.querySelector('.band').offsetHeight - 60, behavior: 'smooth' });
+  saveDraft();
+}
+document.addEventListener('click', (e) => {
+  if (e.target.closest('[data-next]')) {
+    const name = STEPS[stepIdx];
+    if (name === 'hotels') readRooms();
+    if (!validateStep(name)) return;
+    if (name === 'contact' && state.attending === 'no') { doSubmit($('contactNext'), $('declineError')); return; }
+    let n = stepIdx + 1; while (n < STEPS.length - 1 && skip(STEPS[n])) n++;
+    show(n);
+  }
+  if (e.target.closest('[data-back]')) {
+    if (STEPS[stepIdx] === 'hotels') readRooms();
+    let n = stepIdx - 1; while (n > 0 && skip(STEPS[n])) n--;
+    show(n);
+  }
+  const jump = e.target.closest('[data-jump]');
+  if (jump) show(STEPS.indexOf(jump.dataset.jump));
+});
+
+/* ---------- collect / fill ---------- */
+function collect() {
+  const coming = state.attending && state.attending !== 'no';
+  const s = coming ? stay() : null;
+  const hotels = {};
+  const room_requests = {};
+  ['jerusalem', 'telaviv'].forEach(h => {
+    const shown = coming && (h === 'jerusalem' ? inJerusalem() : inPassover());
+    hotels[HOTELS[h].key] = shown ? (state[HOTELS[h].key] || '') : '';
+    if (shown && (state[HOTELS[h].key] === 'yes' || state[HOTELS[h].key] === 'unsure')) room_requests[h] = state.rooms[h];
+  });
+  const visIds = new Set(coming ? visibleEvents().map(e => e.id) : []);
+  return {
+    household_name: $('household_name').value, contact_name: $('contact_name').value, email: $('email').value, phone: $('phone').value,
+    attending: state.attending || 'yes',
+    arrival_date: coming && state.dates_known === 'yes' ? $('arrival_date').value : '',
+    departure_date: coming && state.dates_known === 'yes' ? $('departure_date').value : '',
+    trip_plan: coming && state.dates_known === 'no' ? (state.trip_plan || '') : '',
+    passover_interest: coming && state.dates_known === 'no' && (state.trip_plan === 'bm_only' || state.trip_plan === 'unsure') ? (state.passover_interest || '') : '',
+    flights_booked: coming ? (state.flights_booked || '') : '', flight_notes: coming ? $('flight_notes').value : '',
+    wants_transfer: coming ? (state.wants_transfer || '') : '',
+    ...hotels, room_requests,
+    rooms_adjoining: coming && !$('adjoinField').classList.contains('hidden') ? (state.rooms_adjoining || '') : '',
+    room_notes: coming ? $('room_notes').value : '', notes: coming ? $('notes').value : $('decline_note').value,
+    members: coming ? getMembers() : [],
+    events: Object.entries(state.events).filter(([id]) => visIds.has(id)).map(([event_id, r]) => ({ event_id, ...r }))
+  };
+}
+function fill(d) {
+  ['household_name', 'contact_name', 'email', 'phone', 'arrival_date', 'departure_date', 'flight_notes', 'room_notes', 'notes']
+    .forEach(k => { if (d[k] != null) $(k).value = d[k]; });
+  if (d.arrival_date || d.departure_date) state.dates_known = 'yes';
+  else if (d.trip_plan) state.dates_known = 'no';
+  ['attending', 'trip_plan', 'passover_interest', 'flights_booked', 'wants_transfer', 'hotel_jerusalem', 'hotel_telaviv', 'rooms_adjoining']
+    .forEach(k => { if (d[k]) state[k] = d[k]; });
+  ['attending', 'dates_known', 'trip_plan', 'passover_interest', 'flights_booked', 'wants_transfer', 'rooms_adjoining']
+    .forEach(k => { if (state[k]) setChoice(k, state[k]); });
+  const rr = d.room_requests || {};
+  state.rooms = { jerusalem: rr.jerusalem || [], telaviv: rr.telaviv || [] };
+  $('adults').innerHTML = ''; $('kids').innerHTML = '';
+  (d.members || []).forEach((m, i) => addPerson(m.is_child, m, i === 0 && !m.is_child));
+  state.events = {};
+  (d.events || []).forEach(e => { state.events[e.event_id] = { choice: e.choice, adults: e.adults, kids: e.kids }; });
+  if (d.attending === 'no' && d.notes) { $('decline_note').value = d.notes; $('notes').value = ''; }
+  refreshDatesStep(); updateParty();
+}
+function saveDraft() { if (inviteCode && stepIdx > 0) { readRooms(); lsSet('robbie_draft_' + inviteCode, JSON.stringify(collect())); } }
+
+/* ---------- review ---------- */
+function renderReview(target = 'reviewBody', editable = true) {
+  const p = collect(), coming = p.attending !== 'no';
+  const sec = (title, step, body) => `<div class="rv"><div class="rv-head"><h4>${title}</h4>${editable ? `<button type="button" class="linkbtn" data-jump="${step}">Edit</button>` : ''}</div>${body}</div>`;
+  let h = sec('Contact', 'contact', `<p>${esc(p.contact_name)} · ${esc(p.email)} · ${esc(p.phone)}</p>`);
+  h += sec('Your party', 'party', `<ul>${p.members.map(m => `<li>${esc(m.full_name)}${m.is_child && m.age != null ? ` (${m.age})` : ''}${m.email ? ' · ' + esc(m.email) : ''}${m.phone ? ' · ' + esc(m.phone) : ''}</li>`).join('')}</ul>`);
+  const att = { yes: 'Yes, we’ll be there', maybe: 'Hoping to', no: 'Can’t make it' }[p.attending];
+  let dates = `<p>${att}</p>`;
+  if (coming) {
+    if (p.arrival_date) dates += `<p>${fmtShort(p.arrival_date)} to ${fmtShort(p.departure_date)}</p>`;
+    else dates += `<p>${{ bm_only: 'Bar Mitzvah celebrations only', passover_full: 'Bar Mitzvah + all of Passover', passover_first: 'Bar Mitzvah + first half of Passover', passover_second: 'Bar Mitzvah + second half of Passover', unsure: 'Not sure yet' }[p.trip_plan] || ''}${p.passover_interest ? ' · Passover interest: ' + p.passover_interest : ''}</p>`;
+    if (p.flight_notes) dates += `<p>Flights: ${esc(p.flight_notes)}</p>`;
+    if (p.wants_transfer) dates += `<p>VIP &amp; transfers: ${{ yes: 'please book', no: 'we’ll handle it', unsure: 'not sure yet' }[p.wants_transfer]}</p>`;
+  }
+  h += sec('Dates & travel', 'dates', dates);
+  if (coming) {
+    let ho = '';
+    ['jerusalem', 'telaviv'].forEach(k => {
+      const v = p[HOTELS[k].key]; if (!v) return;
+      ho += `<p><strong>${HOTELS[k].name}:</strong> ${{ yes: 'Yes', no: 'No, own plans', unsure: 'Not sure yet' }[v]}</p>`;
+      if (p.room_requests[k]) ho += `<ul>${p.room_requests[k].map((r, i) => `<li>Room ${i + 1}: ${esc(r.type || 'type not chosen')}${r.who ? ' · ' + esc(r.who) : ''}</li>`).join('')}</ul>`;
+    });
+    if (p.rooms_adjoining) ho += `<p>Adjoining: ${{ yes: 'needed', preferred: 'would be nice', no: 'doesn’t matter' }[p.rooms_adjoining]}</p>`;
+    h += sec('Hotels', 'hotels', ho || '<p>Nothing selected</p>');
+    const evs = EVENTS.filter(e => p.events.some(x => x.event_id === e.id && x.choice !== 'none'));
+    h += sec('Events', 'events', `<ul>${evs.length ? evs.map(e => { const r = p.events.find(x => x.event_id === e.id);
+      return `<li>${e.emoji} ${fmtShort(e.event_date)} · ${esc(e.title)} · ${r.choice === 'all' ? 'everyone' : `${plural(r.adults, 'adult', 'adults')}${r.kids ? ', ' + plural(r.kids, 'kid', 'kids') : ''}`}</li>`; }).join('') : '<li>None selected</li>'}</ul>`);
+  }
+  if (!coming) { h = sec('Contact', 'contact', `<p>${esc(p.contact_name)} · ${esc(p.email)} · ${esc(p.phone)}</p>`) + sec('Your answer', 'contact', `<p>Sadly, can\u2019t make it</p>${p.notes ? `<p><em>${esc(p.notes)}</em></p>` : ''}`); }
+  else if (p.notes) h += sec('Notes', 'review', `<p>${esc(p.notes)}</p>`);
+  $(target).innerHTML = h;
+}
+
+/* ---------- submit ---------- */
+$('submitBtn').onclick = () => doSubmit($('submitBtn'), $('submitError'));
+async function doSubmit(btn, errEl) {
+  const label = btn.textContent; btn.disabled = true; btn.textContent = 'Sending…';
+  try {
+    const p = collect();
+    await rpc('submit_rsvp', { payload: p, invite_code: inviteCode });
+    hasRsvp = true;
+    try { localStorage.removeItem('robbie_draft_' + inviteCode); } catch (e) {}
+    $('thanksMsg').textContent = p.attending === 'no' ? 'We’ll miss you. Thank you for letting us know.'
+      : `Thank you, ${p.contact_name.trim().split(' ')[0]}. We can’t wait to celebrate with you.`;
+    $('wizard').classList.add('hidden'); $('thanks').classList.remove('hidden');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  } catch (e) {
+    errEl.textContent = 'Sorry, that didn’t go through: ' + e.message + '. Please try again.';
+    errEl.classList.remove('hidden');
+  } finally { btn.disabled = false; btn.textContent = btn === $('submitBtn') ? (hasRsvp ? 'Update my RSVP' : 'Send my RSVP') : label; }
+}
+
+
+/* ---------- event-only invites ---------- */
+let EO = null; const eo = {};
+function renderEventOnly(inv) {
+  EO = EVENTS.filter(e => (inv.event_ids || []).includes(e.id));
+  const names = EO.map(e => e.title);
+  $('eoTitle').textContent = EO.length === 1 ? EO[0].title : 'Please join us';
+  $('eoLede').textContent = `We\u2019d love for you to join us as we celebrate Robbie\u2019s Bar Mitzvah. Please let us know if you can make it, and how many will be with you.`;
+  $('eoEvents').innerHTML = EO.map(e => `<div class="event" id="eo-${e.id}">
+    <div class="event-top"><span class="emoji">${e.emoji}</span><div style="flex:1">
+      <p class="meta">${fmtLong(e.event_date)}${e.time_label ? ' · ' + esc(e.time_label) : ''}</p>
+      <h3>${esc(e.title)}</h3><p class="meta" style="color:var(--ink-soft)">${esc(e.place || '')}</p>
+      <p class="desc">${esc(e.description)}</p>${costLine(e)}</div></div>
+    <div class="choices two" data-eo="${e.id}">
+      <button type="button" class="choice" data-value="yes"><span class="dot"></span>Yes, we'll be there</button>
+      <button type="button" class="choice" data-value="none"><span class="dot"></span>Sorry, can't make it</button>
+    </div>
+    <div class="some-box" id="eos-${e.id}">
+      <div class="stepper"><span class="label">Adults</span><button type="button" data-k="adults" data-d="-1" aria-label="Fewer adults">−</button><output data-o="adults">1</output><button type="button" data-k="adults" data-d="1" aria-label="More adults">＋</button></div>
+      <div class="stepper"><span class="label">Kids</span><button type="button" data-k="kids" data-d="-1" aria-label="Fewer kids">−</button><output data-o="kids">0</output><button type="button" data-k="kids" data-d="1" aria-label="More kids">＋</button></div>
+    </div></div>`).join('');
+  Object.keys(eo).forEach(paintEo);
+}
+function paintEo(id) {
+  const r = eo[id], g = document.querySelector(`[data-eo="${id}"]`); if (!g || !r) return;
+  g.classList.remove('invalid');
+  g.querySelectorAll('.choice').forEach(b => b.setAttribute('aria-pressed', b.dataset.value === r.choice ? 'true' : 'false'));
+  const box = $('eos-' + id); box.classList.toggle('show', r.choice === 'yes');
+  box.querySelector('[data-o=adults]').textContent = r.adults; box.querySelector('[data-o=kids]').textContent = r.kids;
+}
+$('eoEvents').addEventListener('click', (ev) => {
+  const c = ev.target.closest('[data-eo] .choice');
+  if (c) { const id = c.closest('[data-eo]').dataset.eo; eo[id] = { adults: 1, kids: 0, ...(eo[id] || {}), choice: c.dataset.value }; paintEo(id); return; }
+  const b = ev.target.closest('button[data-k]'); if (!b) return;
+  const id = b.closest('.some-box').id.slice(4), r = eo[id];
+  r[b.dataset.k] = Math.max(0, Math.min(30, r[b.dataset.k] + parseInt(b.dataset.d, 10))); paintEo(id);
+});
+$('eoSubmit').onclick = async () => {
+  let first = null; const bad = (el) => { el.classList.add('invalid'); first ||= el; };
+  document.querySelectorAll('#eventOnly .invalid').forEach(x => x.classList.remove('invalid'));
+  if (!$('eo_name').value.trim()) bad($('eo_name'));
+  if ($('eo_email').value.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test($('eo_email').value.trim())) bad($('eo_email'));
+  EO.forEach(e => { const r = eo[e.id]; if (!r) bad(document.querySelector(`[data-eo="${e.id}"]`)); else if (r.choice === 'yes' && r.adults + r.kids === 0) bad($('eos-' + e.id)); });
+  if (first) { first.scrollIntoView({ behavior: 'smooth', block: 'center' }); $('eoError').textContent = 'Please fill in the highlighted items.'; $('eoError').classList.remove('hidden'); return; }
+  $('eoError').classList.add('hidden');
+  const btn = $('eoSubmit'); btn.disabled = true; btn.textContent = 'Sending…';
+  const yes = EO.some(e => eo[e.id].choice === 'yes');
+  try {
+    await rpc('submit_rsvp', { invite_code: inviteCode, payload: {
+      household_name: '', contact_name: $('eo_name').value, phone: $('eo_phone').value, email: $('eo_email').value,
+      attending: yes ? 'yes' : 'no', notes: $('eo_notes').value, members: [],
+      events: EO.map(e => ({ event_id: e.id, choice: eo[e.id].choice === 'yes' ? 'some' : 'none', adults: eo[e.id].adults, kids: eo[e.id].kids })) } });
+    hasRsvp = true;
+    $('thanksMsg').textContent = yes ? `Thank you, ${$('eo_name').value.trim().split(' ')[0]}. We look forward to celebrating with you.` : 'We\u2019ll miss you. Thank you for letting us know.';
+    $('eventOnly').classList.add('hidden'); $('thanks').classList.remove('hidden');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  } catch (e) { $('eoError').textContent = 'Sorry, that didn\u2019t go through: ' + e.message + '. Please try again.'; $('eoError').classList.remove('hidden'); }
+  finally { btn.disabled = false; btn.textContent = hasRsvp ? 'Update my RSVP' : 'Send my RSVP'; }
+};
+
+/* ---------- init ---------- */
+(async function init() {
+  const params = new URLSearchParams(location.search);
+  const code = (params.get('i') || lsGet(CODE_KEY) || '').trim().toUpperCase();
+  let inv = null;
+  if (/^[A-Z0-9]{6,12}$/.test(code)) { try { inv = await rpc('get_invite', { invite_code: code }); } catch (e) { inv = null; } }
+  if (!inv) { $('noInvite').classList.remove('hidden'); return; }
+  inviteCode = code; lsSet(CODE_KEY, code);
+  if (params.get('i')) history.replaceState(null, '', location.pathname + '?i=' + code);
+  PAYS = inv.pays || PAYS;
+  try {
+    const r = await fetch(`${SUPABASE_URL}/rest/v1/events?select=*&order=event_date.asc,sort.asc`, { headers: { apikey: SUPABASE_KEY } });
+    EVENTS = await r.json();
+  } catch (e) { EVENTS = []; }
+  if (inv.invite_type === 'events') {
+    if (inv.rsvp) {
+      $('eo_name').value = inv.rsvp.contact_name || ''; $('eo_phone').value = inv.rsvp.phone || ''; $('eo_email').value = inv.rsvp.email || ''; $('eo_notes').value = inv.rsvp.notes || '';
+      (inv.rsvp.events || []).forEach(r => { eo[r.event_id] = { choice: r.choice === 'none' ? 'none' : 'yes', adults: r.choice === 'none' ? 1 : r.adults, kids: r.kids }; });
+      hasRsvp = true; $('eoSubmit').textContent = 'Update my RSVP';
+    }
+    renderEventOnly(inv);
+    if (inv.rsvp && !inv.can_edit) {
+      const r = inv.rsvp;
+      $('receivedBody').innerHTML = `<div class="rv"><div class="rv-head"><h4>Name</h4></div><p>${esc(r.contact_name)}${r.phone ? ' · ' + esc(r.phone) : ''}${r.email ? ' · ' + esc(r.email) : ''}</p></div>
+        <div class="rv"><div class="rv-head"><h4>Your answers</h4></div><ul>${EO.map(e => { const x = (r.events || []).find(y => y.event_id === e.id);
+          return `<li>${e.emoji} ${fmtShort(e.event_date)} · ${esc(e.title)} · ${!x || x.choice === 'none' ? 'can\u2019t make it' : plural(x.adults, 'adult', 'adults') + (x.kids ? ', ' + plural(x.kids, 'kid', 'kids') : '')}</li>`; }).join('')}</ul></div>
+        ${r.notes ? `<div class="rv"><div class="rv-head"><h4>Your note</h4></div><p>${esc(r.notes)}</p></div>` : ''}`;
+      $('received').classList.remove('hidden');
+      return;
+    }
+    $('eventOnly').classList.remove('hidden');
+    return;
+  }
+  $('celebrationList').innerHTML = EVENTS.filter(e => e.cost_type === 'hosted').map(e =>
+    `<li><span class="sd">${fmtShort(e.event_date)}</span><span class="se">${e.emoji}</span><span class="st">${esc(e.title)}<span class="sp">${esc(e.place || '')}</span></span></li>`).join('');
+  $('passoverList').innerHTML = EVENTS.filter(e => e.cost_type !== 'hosted').map(e =>
+    `<li><span class="sd">${fmtShort(e.event_date)}</span><span class="se">${e.emoji}</span><span class="st">${esc(e.title)}<span class="sp">${esc(e.place || '')}</span></span></li>`).join('');
+  applyWording();
+  const draft = (() => { try { return JSON.parse(lsGet('robbie_draft_' + code) || 'null'); } catch (e) { return null; } })();
+  if (inv.rsvp && !inv.can_edit) {
+    fill(inv.rsvp); renderReview('receivedBody', false);
+    $('received').classList.remove('hidden');
+    return;
+  }
+  if (inv.rsvp) { fill(inv.rsvp); hasRsvp = true; $('submitBtn').textContent = 'Update my RSVP'; $('greeting').textContent = 'Welcome back'; }
+  else if (draft) { fill(draft); $('greeting').textContent = 'Welcome back'; }
+  else { $('household_name').value = inv.label || ''; }
+  refreshDatesStep();
+  $('wizard').classList.remove('hidden');
+  show(0);
+})();
+</script>
+</body>
+</html>

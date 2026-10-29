@@ -1,0 +1,363 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>RSVP Admin · Robbie's Bar Mitzvah</title>
+<meta name="robots" content="noindex, nofollow">
+<meta name="theme-color" content="#464920">
+<link rel="icon" type="image/png" href="img/favicon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700&family=DM+Serif+Display&family=Lora:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<style>
+  main { max-width: 1180px; }
+  .topbar { background: var(--olive); color: var(--stone); padding: 16px 20px; display: flex; align-items: center; gap: 14px; }
+  .topbar img { width: 54px; height: auto; }
+  .topbar h1 { font-family: var(--display); font-weight: 400; font-size: 26px; margin: 0; flex: 1; }
+  .topbar button { background: transparent; color: var(--stone); border: 2px solid var(--stone); border-radius: 8px; font-family: var(--label); font-weight: 600; padding: 8px 14px; cursor: pointer; }
+  .tabs { display: flex; gap: 6px; flex-wrap: wrap; margin: 24px 0 18px; }
+  .tab { font-family: var(--label); font-weight: 700; font-size: 16px; letter-spacing: .04em; text-transform: uppercase; background: #fff; color: var(--olive); border: 2px solid var(--olive); border-radius: 8px; padding: 12px 18px; cursor: pointer; }
+  .tab[aria-selected=true] { background: var(--olive); color: #fff; }
+  .tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; margin-bottom: 22px; }
+  .tile { background: var(--paper); border-radius: var(--radius); box-shadow: var(--shadow); padding: 16px 18px; }
+  .tile .n { font-family: var(--display); font-size: 40px; line-height: 1; color: var(--olive); }
+  .tile .l { font-family: var(--label); font-weight: 600; font-size: 14px; text-transform: uppercase; letter-spacing: .05em; color: var(--ink-soft); margin-top: 6px; }
+  table { width: 100%; border-collapse: collapse; font-size: 17px; background: #fff; }
+  th { font-family: var(--label); font-size: 13px; text-transform: uppercase; letter-spacing: .05em; text-align: left; background: var(--olive-pale); padding: 10px; position: sticky; top: 0; }
+  td { padding: 10px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
+  .tablewrap { overflow-x: auto; border-radius: var(--radius); box-shadow: var(--shadow); }
+  .daysep td { background: var(--stone); font-family: var(--label); font-weight: 700; font-size: 14px; text-transform: uppercase; letter-spacing: .05em; color: var(--gold-text); }
+  .muted { color: var(--ink-soft); font-size: 15px; }
+  .small-btn { font-family: var(--label); font-weight: 600; font-size: 14px; background: #fff; color: var(--olive); border: 2px solid var(--olive); border-radius: 6px; padding: 6px 10px; cursor: pointer; margin: 2px 4px 2px 0; }
+  .small-btn.danger { color: var(--danger); border-color: var(--danger); }
+  .inv-form { display: grid; grid-template-columns: 2fr 1.2fr 1.2fr; gap: 12px; align-items: end; }
+  .inv-form .full { grid-column: 1 / -1; }
+  .checks { display: flex; flex-wrap: wrap; gap: 10px 22px; }
+  .checks label { display: flex; align-items: center; gap: 8px; text-transform: none; letter-spacing: 0; font-family: var(--body); font-weight: 400; font-size: 17px; }
+  .checks input { width: 22px; height: 22px; }
+  @media (max-width: 760px) { .inv-form { grid-template-columns: 1fr; } }
+  .hh { background: var(--paper); border-radius: var(--radius); box-shadow: var(--shadow); padding: 20px 22px; margin-bottom: 16px; }
+  .hh h3 { font-family: var(--display); font-weight: 400; font-size: 26px; margin: 0 0 4px; }
+  .hh .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 6px 24px; margin-top: 10px; }
+  .hh h4 { font-family: var(--label); text-transform: uppercase; letter-spacing: .05em; font-size: 13px; margin: 12px 0 4px; color: var(--gold-text); }
+  .hh ul { margin: 0; padding-left: 20px; }
+  .filters { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 14px; }
+  .filters input, .filters select { max-width: 280px; }
+  .toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: var(--ink); color: #fff; padding: 12px 20px; border-radius: 8px; font-family: var(--label); display: none; z-index: 10; }
+</style>
+</head>
+<body>
+<div class="topbar">
+  <img src="img/rjd-cream.png" alt="">
+  <h1>RSVP Admin</h1>
+  <button type="button" id="refresh" class="hidden">Refresh</button>
+  <button type="button" id="logout" class="hidden">Lock</button>
+</div>
+<main>
+  <section class="card" id="login" style="max-width:520px;margin:40px auto">
+    <h2><span class="ico">🔐</span> Admin passcode</h2>
+    <div class="field"><input type="password" id="pass" autocomplete="current-password" placeholder="XXXX-XXXX-XXXX"></div>
+    <button type="button" class="btn" id="loginBtn">Open</button>
+    <p class="error-msg hidden" id="loginErr"></p>
+  </section>
+
+  <div id="app" class="hidden">
+    <div class="tabs" role="tablist">
+      <button class="tab" data-tab="overview" aria-selected="true">Overview</button>
+      <button class="tab" data-tab="events">Headcounts</button>
+      <button class="tab" data-tab="invites">Invites &amp; links</button>
+      <button class="tab" data-tab="responses">Responses</button>
+    </div>
+
+    <div data-panel="overview"></div>
+    <div data-panel="events" class="hidden"></div>
+    <div data-panel="invites" class="hidden">
+      <section class="card">
+        <h2 id="invFormTitle"><span class="ico">➕</span> Add a family</h2>
+        <input type="hidden" id="inv_id">
+        <div class="inv-form">
+          <div><label for="inv_label">Family name</label><input type="text" id="inv_label" maxlength="120"></div>
+          <div class="full"><label for="inv_party">Who this invite is for (shown to the guest)</label><input type="text" id="inv_party" maxlength="600" placeholder="e.g. Isaac, Ivette, Morris"></div>
+          <div class="full"><label for="inv_type">Invite type</label>
+            <select id="inv_type"><option value="full">Full trip (family RSVP: party, dates, hotels, events)</option><option value="events">Specific events only (e.g. a rabbi or friends for a Seder)</option></select></div>
+          <div class="full hidden" id="inv_events_wrap">
+            <span class="label">Invited to</span>
+            <div class="checks" id="inv_events"></div>
+          </div>
+          <div><label for="inv_status">Comp status</label>
+            <select id="inv_status"><option value="paying">Paying</option><option value="comped">Comped</option><option value="partial">Partly comped</option></select></div>
+          <div><label for="inv_covered">Covered by (internal)</label>
+            <select id="inv_covered"><option value="">—</option><option>Themselves</option><option>Aronows</option><option>Dabahs</option><option>Hararis</option><option>Other</option></select></div>
+          <div class="full hidden" id="inv_partial">
+            <span class="label">Comped items</span>
+            <div class="checks">
+              <label><input type="checkbox" id="c_rooms"> Hotel rooms</label>
+              <label><input type="checkbox" id="c_transfers"> Airport VIP &amp; transfers</label>
+              <label><input type="checkbox" id="c_meals"> Passover meals</label>
+              <label><input type="checkbox" id="c_activities"> Passover activities &amp; synagogue</label>
+            </div>
+          </div>
+          <div class="full"><label for="inv_note">Internal note</label><input type="text" id="inv_note" maxlength="1000"></div>
+          <div class="full"><button type="button" class="btn" id="invSave">Save &amp; create link</button>
+            <button type="button" class="btn secondary hidden" id="invCancel">Cancel edit</button></div>
+        </div>
+      </section>
+      <div class="filters"><input type="search" id="invSearch" placeholder="Search families"><select id="invFilter">
+        <option value="">All invites</option><option value="none">Not responded</option><option value="yes">Coming</option><option value="maybe">Maybe</option><option value="no">Can't come</option></select></div>
+      <div class="tablewrap"><table id="invTable"></table></div>
+    </div>
+    <div data-panel="responses" class="hidden"></div>
+  </div>
+</main>
+<div class="toast" id="toast"></div>
+
+<script>
+const SUPABASE_URL = 'https://khzwtkdzeygvbodtkovr.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_taprzRIuug3k_cv_4enseg_sr6SBBq1';
+const $ = (id) => document.getElementById(id);
+let PASS = null, DATA = null;
+const CAT_LABEL = { rooms: 'Rooms', transfers: 'Transfers', meals: 'Meals', activities: 'Activities' };
+
+function rpc(fn, body) {
+  return fetch(`${SUPABASE_URL}/rest/v1/rpc/${fn}`, { method: 'POST', headers: { apikey: SUPABASE_KEY, 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
+    .then(async r => { const d = await r.json().catch(() => null); if (!r.ok) throw new Error((d && d.message) || 'Error'); return d; });
+}
+function esc(s) { return String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); }
+function fmt(iso) { return iso ? new Date(iso + 'T12:00:00').toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }) : ''; }
+function toast(t) { const el = $('toast'); el.textContent = t; el.style.display = 'block'; setTimeout(() => el.style.display = 'none', 2200); }
+function link(code) { return new URL('./?i=' + code, location.href).href; }
+function ssGet() { try { return sessionStorage.getItem('robbie_admin'); } catch (e) { return null; } }
+function ssSet(v) { try { v ? sessionStorage.setItem('robbie_admin', v) : sessionStorage.removeItem('robbie_admin'); } catch (e) {} }
+
+async function load() {
+  DATA = await rpc('admin_dashboard', { passcode: PASS });
+  renderAll();
+}
+async function login(p) {
+  PASS = p;
+  try { await load(); ssSet(p); $('login').classList.add('hidden'); $('app').classList.remove('hidden'); $('refresh').classList.remove('hidden'); $('logout').classList.remove('hidden'); }
+  catch (e) { PASS = null; ssSet(null); $('loginErr').textContent = 'That passcode didn’t work.'; $('loginErr').classList.remove('hidden'); }
+}
+$('loginBtn').onclick = () => login($('pass').value.trim());
+$('pass').addEventListener('keydown', e => { if (e.key === 'Enter') login($('pass').value.trim()); });
+$('logout').onclick = () => { ssSet(null); location.reload(); };
+$('refresh').onclick = async () => { await load(); toast('Updated'); };
+document.querySelectorAll('.tab').forEach(t => t.onclick = () => {
+  document.querySelectorAll('.tab').forEach(x => x.setAttribute('aria-selected', x === t ? 'true' : 'false'));
+  document.querySelectorAll('[data-panel]').forEach(p => p.classList.toggle('hidden', p.dataset.panel !== t.dataset.tab));
+});
+
+function statusText(i) {
+  if (i.comp_status === 'comped') return 'Comped';
+  if (i.comp_status === 'paying') return 'Paying';
+  const c = Object.entries(i.comp).filter(([, v]) => v).map(([k]) => CAT_LABEL[k]);
+  return 'Partly comped' + (c.length ? ' (' + c.join(', ') + ')' : '');
+}
+function people(h) { const m = h ? h.members : []; return { a: m.filter(x => !x.is_child).length, k: m.filter(x => x.is_child).length }; }
+
+function renderAll() {
+  $('inv_events').innerHTML = DATA.events.map(e => `<label><input type="checkbox" class="inv-ev" value="${e.id}"> ${e.emoji} ${fmt(e.event_date)} · ${esc(e.title)}</label>`).join('');
+  renderOverview(); renderEvents(); renderInvites(); renderResponses();
+}
+$('inv_type').onchange = () => $('inv_events_wrap').classList.toggle('hidden', $('inv_type').value !== 'events');
+function evNames(ids) { return DATA.events.filter(e => ids.includes(e.id)).map(e => e.title); }
+function joinList(a) { return a.length < 2 ? a.join('') : a.slice(0, -1).join(', ') + ' and ' + a[a.length - 1]; }
+
+function renderOverview() {
+  const all = DATA.invites, eoInv = all.filter(i => i.invite_type === 'events');
+  const inv = all.filter(i => i.invite_type !== 'events'), resp = inv.filter(i => i.household);
+  const eoResp = eoInv.filter(i => i.household);
+  const coming = resp.filter(i => i.household.attending !== 'no');
+  let a = 0, k = 0; coming.forEach(i => { const p = people(i.household); a += p.a; k += p.k; });
+  const cnt = (f) => coming.filter(f).length;
+  const roomsJ = coming.reduce((s, i) => s + ((i.household.room_requests || {}).jerusalem || []).length, 0);
+  const roomsT = coming.reduce((s, i) => s + ((i.household.room_requests || {}).telaviv || []).length, 0);
+  $$panel('overview').innerHTML = `
+    <div class="tiles">
+      <div class="tile"><div class="n">${inv.length}</div><div class="l">Invites</div></div>
+      <div class="tile"><div class="n">${resp.length}</div><div class="l">Responded</div></div>
+      <div class="tile"><div class="n">${inv.length - resp.length}</div><div class="l">Waiting on</div></div>
+      <div class="tile"><div class="n">${cnt(i => i.household.attending === 'yes')}</div><div class="l">Families coming</div></div>
+      <div class="tile"><div class="n">${cnt(i => i.household.attending === 'maybe')}</div><div class="l">Maybe</div></div>
+      <div class="tile"><div class="n">${resp.length - coming.length}</div><div class="l">Can't come</div></div>
+      <div class="tile"><div class="n">${a + k}</div><div class="l">People (${a} adults, ${k} kids)</div></div>
+      <div class="tile"><div class="n">${roomsJ}</div><div class="l">King David rooms asked for</div></div>
+      <div class="tile"><div class="n">${roomsT}</div><div class="l">InterContinental rooms asked for</div></div>
+      <div class="tile"><div class="n">${cnt(i => i.household.wants_transfer === 'yes')}</div><div class="l">Want VIP &amp; transfers</div></div>
+      <div class="tile"><div class="n">${eoResp.length} / ${eoInv.length}</div><div class="l">Event-only guests answered</div></div>
+    </div>
+    ${dupesHtml()}
+    <section class="card"><h2><span class="ico">⏳</span> Still waiting on</h2>
+      <p>${all.filter(i => !i.household).map(i => esc(i.label) + (i.invite_type === 'events' ? ' <span class="muted">(event-only)</span>' : '')).join(' · ') || 'Everyone has answered.'}</p></section>
+    <section class="card"><h2><span class="ico">⬇️</span> Export</h2>
+      <p class="muted">Spreadsheet files you can open in Excel or Google Sheets.</p>
+      <button class="btn secondary" onclick="exportPeople()">Everyone (one row per person)</button>
+      <button class="btn secondary" onclick="exportHouseholds()">Families + events</button></section>`;
+}
+function dupesHtml() {
+  const seen = {}, add = (key, label, fam) => { if (!key) return; (seen[key] ||= { label, fams: new Map() }).fams.set(fam.id, fam.label); };
+  DATA.invites.forEach(i => { const h = i.household; if (!h || h.attending === 'no') return;
+    h.members.forEach(m => { add('n:' + m.full_name.toLowerCase().replace(/\s+/g, ' ').trim(), m.full_name, i); if (m.email) add('e:' + m.email.toLowerCase(), m.email, i); }); });
+  const d = Object.values(seen).filter(x => x.fams.size > 1);
+  if (!d.length) return '';
+  return `<section class="card" style="border-left:5px solid var(--danger)"><h2><span class="ico">⚠️</span> Possible duplicates</h2>
+    <p class="muted">The same name or email appears in more than one family's RSVP. Check whether someone was counted twice.</p>
+    <ul>${d.map(x => `<li><strong>${esc(x.label)}</strong> is in ${[...x.fams.values()].map(esc).join(' and ')}</li>`).join('')}</ul></section>`;
+}
+function $$panel(n) { return document.querySelector(`[data-panel="${n}"]`); }
+
+function renderEvents() {
+  let html = `<p class="muted">Counts come from each family's answers. "Paying" and "Comped" split the shared Passover items by each invite's comp status. Hosted events have no split.</p>
+    <div class="tablewrap"><table><thead><tr><th>Event</th><th class="num">Families</th><th class="num">Adults</th><th class="num">Kids</th><th class="num">Total</th><th class="num">Paying (A/K)</th><th class="num">Comped (A/K)</th><th>Comped by</th></tr></thead><tbody>`;
+  let last = '';
+  DATA.events.forEach(e => {
+    if (e.event_date !== last) { html += `<tr class="daysep"><td colspan="8">${fmt(e.event_date)}</td></tr>`; last = e.event_date; }
+    let f = 0, A = 0, K = 0, pa = 0, pk = 0, ca = 0, ck = 0; const by = {};
+    DATA.invites.forEach(i => {
+      const h = i.household; if (!h || h.attending === 'no') return;
+      const r = h.events.find(x => x.event_id === e.id); if (!r || r.choice === 'none') return;
+      f++; A += r.adults; K += r.kids;
+      if (e.cost_type !== 'hosted') {
+        if (i.comp[e.comp_category]) { ca += r.adults; ck += r.kids; const b = i.covered_by || 'Unassigned'; by[b] = (by[b] || 0) + r.adults + r.kids; }
+        else { pa += r.adults; pk += r.kids; }
+      }
+    });
+    const hosted = e.cost_type === 'hosted';
+    html += `<tr><td>${e.emoji} ${esc(e.title)}${hosted ? ' <span class="muted">· hosted</span>' : ''}</td><td class="num">${f}</td><td class="num">${A}</td><td class="num">${K}</td><td class="num"><strong>${A + K}</strong></td>
+      <td class="num">${hosted ? '' : pa + ' / ' + pk}</td><td class="num">${hosted ? '' : ca + ' / ' + ck}</td>
+      <td class="muted">${hosted ? '' : Object.entries(by).map(([b, n]) => `${esc(b)} ${n}`).join(' · ')}</td></tr>`;
+  });
+  $$panel('events').innerHTML = html + '</tbody></table></div>';
+}
+
+function renderInvites() {
+  const q = ($('invSearch').value || '').toLowerCase(), f = $('invFilter').value;
+  const rows = DATA.invites.filter(i => (!q || i.label.toLowerCase().includes(q)) &&
+    (!f || (f === 'none' ? !i.household : i.household && i.household.attending === f)));
+  $('invTable').innerHTML = `<thead><tr><th>Family</th><th>Comp status</th><th>Covered by</th><th>RSVP</th><th>Link</th><th></th></tr></thead><tbody>` +
+    rows.map(i => {
+      const h = i.household, p = people(h);
+      const rs = !h ? '⏳ Not yet' : ({ yes: '✅ Coming', maybe: '🤔 Maybe', no: '❌ Can’t come' }[h.attending] + (h.attending !== 'no' ? ` · ${p.a + p.k} people` : ''));
+      const eoLine = i.invite_type === 'events' ? `<div class="muted">Event-only: ${esc(evNames(i.event_ids).join(', ') || 'no events picked')}</div>` : '';
+      const total = h ? h.events.reduce((m, r) => Math.max(m, r.adults + r.kids), 0) : 0;
+      const rs2 = i.invite_type === 'events' && h ? (h.attending === 'no' ? '❌ Can\u2019t come' : `✅ Coming · up to ${total}`) : rs;
+      return `<tr><td><strong>${esc(i.label)}</strong>${i.party_names ? `<div class="muted">${esc(i.party_names)}</div>` : ''}${eoLine}${i.private_note ? `<div class="muted">${esc(i.private_note)}</div>` : ''}</td>
+        <td>${statusText(i)}</td><td>${esc(i.covered_by || '')}</td><td>${rs2}</td>
+        <td><button class="small-btn" data-copy="${i.code}">Copy link</button><button class="small-btn" data-text="${i.id}">Copy text message</button></td>
+        <td>${h ? (i.allow_edit ? `<div class="muted">🔓 Open for changes</div><button class="small-btn" data-lock="${i.id}">Lock</button>` : `<button class="small-btn" data-reopen="${i.id}">Reopen for changes</button>`) : ''}
+          <button class="small-btn" data-edit="${i.id}">Edit</button><button class="small-btn danger" data-del="${i.id}">Delete</button></td></tr>`;
+    }).join('') + '</tbody>';
+}
+$('invSearch').oninput = renderInvites; $('invFilter').onchange = renderInvites;
+$('inv_status').onchange = () => $('inv_partial').classList.toggle('hidden', $('inv_status').value !== 'partial');
+$('invTable').addEventListener('click', async (e) => {
+  const t = e.target;
+  if (t.dataset.copy) { await copy(link(t.dataset.copy)); toast('Link copied'); }
+  if (t.dataset.text) {
+    const i = DATA.invites.find(x => x.id === t.dataset.text);
+    const msg = i.invite_type === 'events'
+      ? `Hi, we'd love for you to join us for ${joinList(evNames(i.event_ids))} as we celebrate Robbie's Bar Mitzvah in Israel this April. Please let us know if you can make it here: ${link(i.code)}`
+      : `Hi, we'd love to have you with us in Israel for Robbie's Bar Mitzvah and Passover in Tel Aviv this April. When you have a few minutes, please let us know who's coming and which events you'd like to join here: ${link(i.code)}`;
+    await copy(msg);
+    toast('Message copied');
+  }
+  if (t.dataset.edit) {
+    const i = DATA.invites.find(x => x.id === t.dataset.edit);
+    $('inv_id').value = i.id; $('inv_label').value = i.label; $('inv_party').value = i.party_names || ''; $('inv_status').value = i.comp_status; $('inv_covered').value = i.covered_by || '';
+    $('c_rooms').checked = i.comp_rooms; $('c_transfers').checked = i.comp_transfers; $('c_meals').checked = i.comp_meals; $('c_activities').checked = i.comp_activities;
+    $('inv_note').value = i.private_note || ''; $('inv_status').onchange();
+    $('inv_type').value = i.invite_type || 'full'; $('inv_type').onchange();
+    document.querySelectorAll('.inv-ev').forEach(c => c.checked = (i.event_ids || []).includes(c.value));
+    $('invFormTitle').innerHTML = '<span class="ico">✏️</span> Edit ' + esc(i.label); $('invSave').textContent = 'Save changes'; $('invCancel').classList.remove('hidden');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+  if (t.dataset.reopen || t.dataset.lock) {
+    const id = t.dataset.reopen || t.dataset.lock, i = DATA.invites.find(x => x.id === id);
+    await rpc('admin_set_edit', { passcode: PASS, iid: id, allow: !!t.dataset.reopen });
+    await load();
+    if (t.dataset.reopen) { await copy(link(i.code)); toast('Reopened · link copied. It locks again once they resend.'); } else toast('Locked');
+  }
+  if (t.dataset.del) {
+    const i = DATA.invites.find(x => x.id === t.dataset.del);
+    if (!confirm(`Delete the invite for ${i.label}${i.household ? ' and their RSVP' : ''}? This can't be undone.`)) return;
+    await rpc('admin_delete_invite', { passcode: PASS, iid: i.id }); await load(); toast('Deleted');
+  }
+});
+function resetForm() {
+  ['inv_id', 'inv_label', 'inv_note', 'inv_party'].forEach(k => $(k).value = ''); $('inv_status').value = 'paying'; $('inv_covered').value = '';
+  ['c_rooms', 'c_transfers', 'c_meals', 'c_activities'].forEach(k => $(k).checked = false); $('inv_status').onchange();
+  $('inv_type').value = 'full'; $('inv_type').onchange(); document.querySelectorAll('.inv-ev').forEach(c => c.checked = false);
+  $('invFormTitle').innerHTML = '<span class="ico">➕</span> Add a family'; $('invSave').textContent = 'Save & create link'; $('invCancel').classList.add('hidden');
+}
+$('invCancel').onclick = resetForm;
+$('invSave').onclick = async () => {
+  if (!$('inv_label').value.trim()) { $('inv_label').classList.add('invalid'); return; }
+  const evIds = [...document.querySelectorAll('.inv-ev:checked')].map(c => c.value);
+  if ($('inv_type').value === 'events' && !evIds.length) { toast('Pick at least one event'); return; }
+  const saved = await rpc('admin_save_invite', { passcode: PASS, inv: {
+    id: $('inv_id').value, label: $('inv_label').value, party_names: $('inv_party').value, invite_type: $('inv_type').value, event_ids: $('inv_type').value === 'events' ? evIds : [],
+    comp_status: $('inv_status').value, covered_by: $('inv_covered').value,
+    comp_rooms: $('c_rooms').checked, comp_transfers: $('c_transfers').checked, comp_meals: $('c_meals').checked, comp_activities: $('c_activities').checked,
+    private_note: $('inv_note').value } });
+  const isNew = !$('inv_id').value; resetForm(); await load();
+  if (isNew) { await copy(link(saved.code)); toast('Saved · link copied'); } else toast('Saved');
+};
+async function copy(t) { try { await navigator.clipboard.writeText(t); } catch (e) { const a = document.createElement('textarea'); a.value = t; document.body.appendChild(a); a.select(); document.execCommand('copy'); a.remove(); } }
+
+function renderResponses() {
+  const resp = DATA.invites.filter(i => i.household).sort((a, b) => (b.household.updated_at || '').localeCompare(a.household.updated_at || ''));
+  const ev = Object.fromEntries(DATA.events.map(e => [e.id, e]));
+  const plan = { bm_only: 'Bar Mitzvah only', passover_full: 'BM + all of Passover', passover_first: 'BM + first half of Passover', passover_second: 'BM + second half of Passover', unsure: 'Not sure yet' };
+  $$panel('responses').innerHTML = resp.length ? resp.map(i => {
+    const h = i.household, rr = h.room_requests || {};
+    if (i.invite_type === 'events') return `<div class="hh"><h3>${esc(i.label)} <span class="muted">· event-only</span></h3>
+      <p class="muted">${statusText(i)}${i.covered_by ? ' · covered by ' + esc(i.covered_by) : ''} · updated ${new Date(h.updated_at).toLocaleString()}</p>
+      <p>${esc(h.contact_name)}${h.phone ? ' · ' + esc(h.phone) : ''}${h.email ? ' · ' + esc(h.email) : ''}</p>
+      <ul>${h.events.map(r => ev[r.event_id] ? `<li>${ev[r.event_id].emoji} ${esc(ev[r.event_id].title)}: ${r.choice === 'none' ? 'not coming' : `${r.adults} adults, ${r.kids} kids`}</li>` : '').join('')}</ul>
+      ${h.notes ? `<h4>Notes</h4><p>${esc(h.notes)}</p>` : ''}</div>`;
+    return `<div class="hh"><h3>${esc(h.household_name)}</h3>
+      <p class="muted">${statusText(i)}${i.covered_by ? ' · covered by ' + esc(i.covered_by) : ''} · updated ${new Date(h.updated_at).toLocaleString()}</p>
+      <div class="grid">
+        <div><h4>Contact</h4>${esc(h.contact_name)}<br>${esc(h.email)}<br>${esc(h.phone || '')}</div>
+        <div><h4>Attending</h4>${{ yes: 'Yes', maybe: 'Maybe', no: 'Can’t come' }[h.attending]}<br>
+          ${h.arrival_date ? fmt(h.arrival_date) + ' to ' + fmt(h.departure_date) : esc(plan[h.trip_plan] || 'No dates')}${h.passover_interest ? '<br>Passover interest: ' + h.passover_interest : ''}</div>
+        <div><h4>Travel</h4>Flights booked: ${h.flights_booked || '—'}<br>VIP &amp; transfers: ${h.wants_transfer || '—'}${h.flight_notes ? '<br>' + esc(h.flight_notes) : ''}</div>
+      </div>
+      <h4>Party</h4><ul>${h.members.map(m => `<li>${esc(m.full_name)}${m.is_child ? ` (${m.age ?? '?'})` : ''}${m.email ? ' · ' + esc(m.email) : ''}${m.phone ? ' · ' + esc(m.phone) : ''}</li>`).join('')}</ul>
+      <div class="grid">
+        <div><h4>King David</h4>${h.hotel_jerusalem || '—'}${(rr.jerusalem || []).length ? '<ul>' + rr.jerusalem.map(r => `<li>${esc(r.type || 'type?')}${r.who ? ' · ' + esc(r.who) : ''}</li>`).join('') + '</ul>' : ''}</div>
+        <div><h4>InterContinental</h4>${h.hotel_telaviv || '—'}${(rr.telaviv || []).length ? '<ul>' + rr.telaviv.map(r => `<li>${esc(r.type || 'type?')}${r.who ? ' · ' + esc(r.who) : ''}</li>`).join('') + '</ul>' : ''}</div>
+        <div><h4>Rooms</h4>Adjoining: ${h.rooms_adjoining || '—'}${h.room_notes ? '<br>' + esc(h.room_notes) : ''}</div>
+      </div>
+      <h4>Events</h4><ul>${h.events.filter(r => r.choice !== 'none').map(r => ev[r.event_id] ? `<li>${ev[r.event_id].emoji} ${fmt(ev[r.event_id].event_date)} ${esc(ev[r.event_id].title)}: ${r.adults} adults, ${r.kids} kids</li>` : '').join('') || '<li>None</li>'}</ul>
+      ${h.notes ? `<h4>Notes</h4><p>${esc(h.notes)}</p>` : ''}</div>`;
+  }).join('') : '<section class="card"><p>No responses yet.</p></section>';
+}
+
+function csv(rows) { return rows.map(r => r.map(v => { v = v == null ? '' : String(v); return /[",\n]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v; }).join(',')).join('\n'); }
+function download(name, text) { const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob(['﻿' + text], { type: 'text/csv' })); a.download = name; a.click(); }
+function exportPeople() {
+  const rows = [['Family', 'Name', 'Adult/Child', 'Age', 'Email', 'Phone', 'Attending', 'Arrive', 'Depart', 'Plan', 'Comp status', 'Covered by']];
+  DATA.invites.forEach(i => { const h = i.household; if (!h) return; h.members.forEach(m => rows.push([h.household_name, m.full_name, m.is_child ? 'Child' : 'Adult', m.age, m.email, m.phone, h.attending, h.arrival_date, h.departure_date, h.trip_plan, statusText(i), i.covered_by])); });
+  download('robbie-rsvp-people.csv', csv(rows));
+}
+function exportHouseholds() {
+  const head = ['Family', 'Contact', 'Email', 'Phone', 'Attending', 'Arrive', 'Depart', 'Plan', 'Passover interest', 'Adults', 'Kids', 'VIP & transfers', 'King David', 'KD rooms', 'InterContinental', 'IC rooms', 'Adjoining', 'Room notes', 'Notes', 'Comp status', 'Covered by', 'Link'];
+  const rows = [head.concat(DATA.events.map(e => `${fmt(e.event_date)} ${e.title}`))];
+  DATA.invites.forEach(i => {
+    const h = i.household, p = people(h), rr = (h && h.room_requests) || {};
+    const base = h ? [h.household_name, h.contact_name, h.email, h.phone, h.attending, h.arrival_date, h.departure_date, h.trip_plan, h.passover_interest, p.a, p.k, h.wants_transfer, h.hotel_jerusalem,
+      (rr.jerusalem || []).map(r => r.type).join('; '), h.hotel_telaviv, (rr.telaviv || []).map(r => r.type).join('; '), h.rooms_adjoining, h.room_notes, h.notes]
+      : [i.label, '', '', '', 'not responded', '', '', '', '', '', '', '', '', '', '', '', '', '', ''];
+    rows.push(base.concat([statusText(i), i.covered_by, link(i.code)], DATA.events.map(e => { const r = h && h.events.find(x => x.event_id === e.id); return r && r.choice !== 'none' ? r.adults + r.kids : ''; })));
+  });
+  download('robbie-rsvp-families.csv', csv(rows));
+}
+
+const saved = ssGet(); if (saved) login(saved);
+</script>
+</body>
+</html>
