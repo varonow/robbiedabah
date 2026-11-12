@@ -26,7 +26,7 @@
 </header>
 <div class="band">
   <h1>Robbie's Bar Mitzvah</h1>
-  <p class="when">Jerusalem · Monday, April 19 &nbsp;|&nbsp; Passover in Tel Aviv · April 21–29</p>
+  <p class="when">Jerusalem · April 16–20 &nbsp;|&nbsp; Passover in Tel Aviv · April 21–29</p>
   <p class="host">Hosted by Danielle &amp; Mac Dabah</p>
 </div>
 
@@ -39,7 +39,7 @@
     <section class="card step" data-step="welcome" style="margin-top:-36px;position:relative">
       <p class="step-label" id="greeting">You're invited</p>
       <h2>Celebrate with us in Israel</h2>
-      <p class="lede">Robbie becomes a Bar Mitzvah in Jerusalem on the Monday before Passover, and the celebrations continue in Tel Aviv. Here's the full schedule, so you can decide how much of it you'd like to join.</p>
+      <p class="lede">We begin with Shabbat in Jerusalem on Friday, April 16. Robbie becomes a Bar Mitzvah on Monday, April 19, two days before Passover, and the celebrations continue in Tel Aviv. Here's the full schedule, so you can decide how much of it you'd like to join.</p>
       <h3 class="section-title">The Bar Mitzvah celebrations</h3>
       <ul class="schedule" id="celebrationList"></ul>
       <div class="passover-box">
@@ -98,6 +98,7 @@
       <div class="progress" data-progress></div>
       <p class="step-label">Step 2 of 6</p>
       <h2><span class="ico">👨‍👩‍👧‍👦</span> Who's in your party</h2>
+      <div class="banner" id="partyFor"></div>
       <p class="lede">List everyone traveling with you, including yourself. Add an email and mobile for anyone who has their own, kids included. Later, everyone with an email will get their own login to the trip app.</p>
       <span class="label">Adults</span>
       <div id="adults"></div>
@@ -134,7 +135,7 @@
               <input type="date" id="departure_date" min="2027-04-01" max="2027-05-15">
             </div>
           </div>
-          <p class="hint" id="dateHint">Guests arrive in Jerusalem on Sunday, April 18. Passover ends Thursday night, April 29.</p>
+          <p class="hint" id="dateHint">You're welcome from Friday, April 16, for Shabbat in Jerusalem. Passover ends Thursday night, April 29.</p>
         </div>
         <div id="datesNo" class="hidden">
           <div class="field">
@@ -287,7 +288,7 @@ const STEPS = ['welcome', 'contact', 'party', 'dates', 'hotels', 'events', 'revi
 
 const HOTELS = {
   jerusalem: {
-    key: 'hotel_jerusalem', name: 'King David Hotel', city: 'Jerusalem', dates: 'Sun, April 18 – Tue, April 20',
+    key: 'hotel_jerusalem', name: 'King David Hotel', city: 'Jerusalem', dates: 'Fri, April 16 – Tue, April 20',
     types: ['Deluxe Room, New City view', 'Deluxe Room, Old City view', 'Family Room (up to 4)', 'Garden Room', 'Junior Suite', 'Mini Suite', 'Executive Suite']
   },
   telaviv: {
@@ -296,7 +297,7 @@ const HOTELS = {
   }
 };
 const DAY_LABELS = {
-  '2027-04-18': 'Arrival · Jerusalem', '2027-04-19': 'Bar Mitzvah Day · Jerusalem', '2027-04-20': 'Desert day, then on to Tel Aviv',
+  '2027-04-16': 'Shabbat · Jerusalem', '2027-04-17': 'Shabbat · Jerusalem', '2027-04-18': 'Jerusalem', '2027-04-19': 'Bar Mitzvah Day · Jerusalem', '2027-04-20': 'Jerusalem to Tel Aviv',
   '2027-04-21': 'Erev Pesach · Tel Aviv', '2027-04-22': 'First day of Passover', '2027-04-23': 'Second day of Passover · Shabbat begins',
   '2027-04-24': 'Shabbat Chol Hamoed', '2027-04-25': 'Chol Hamoed', '2027-04-26': 'Chol Hamoed', '2027-04-27': 'Chol Hamoed · last days begin at night',
   '2027-04-28': 'Seventh day of Passover', '2027-04-29': 'Last day of Passover · holiday ends at night'
@@ -441,7 +442,7 @@ function inPassover() {
   if (['passover_full', 'passover_first', 'passover_second', 'unsure'].includes(state.trip_plan)) return true;
   return state.trip_plan === 'bm_only' && (state.passover_interest === 'yes' || state.passover_interest === 'maybe');
 }
-function inJerusalem() { const s = stay(); return s ? (s.from <= '2027-04-20' && s.to >= '2027-04-18') : true; }
+function inJerusalem() { const s = stay(); return s ? (s.from <= '2027-04-20' && s.to >= '2027-04-16') : true; }
 
 /* ---------- hotels ---------- */
 function renderHotels() {
@@ -546,7 +547,7 @@ function eventCard(e, s) {
 function renderEvents() {
   const s = stay(), w = passoverWindow(), vis = visibleEvents();
   const cel = vis.filter(e => e.cost_type === 'hosted'), pas = vis.filter(e => e.cost_type !== 'hosted');
-  let html = `<h3 class="section-title">The Bar Mitzvah celebrations</h3><p class="section-sub">April 18–26, in Jerusalem, the desert and Tel Aviv.</p>`
+  let html = `<h3 class="section-title">The Bar Mitzvah celebrations</h3><p class="section-sub">April 16–26, in Jerusalem and Tel Aviv.</p>`
     + cel.map(e => eventCard(e, s)).join('');
   if (pas.length) {
     html += `<hr class="rule"><h3 class="section-title">Passover in Tel Aviv</h3><p class="section-sub">At the David InterContinental${w ? ', for the part of the holiday you\u2019ll be with us' : ''}.</p>`;
@@ -877,6 +878,9 @@ $('eoSubmit').onclick = async () => {
     `<li><span class="sd">${fmtShort(e.event_date)}</span><span class="se">${e.emoji}</span><span class="st">${esc(e.title)}<span class="sp">${esc(e.place || '')}</span></span></li>`).join('');
   $('passoverList').innerHTML = EVENTS.filter(e => e.cost_type !== 'hosted').map(e =>
     `<li><span class="sd">${fmtShort(e.event_date)}</span><span class="se">${e.emoji}</span><span class="st">${esc(e.title)}<span class="sp">${esc(e.place || '')}</span></span></li>`).join('');
+  const pn = (inv.party_names || '').split(',').map(x => x.trim()).filter(Boolean);
+  $('partyFor').innerHTML = (pn.length ? `This invitation is for <strong>${esc(joinList(pn).replace(/ and ([^,]+)$/, ' & $1'))}</strong>. ` : '')
+    + `Married children with families of their own are getting their own invitation, so please ${pn.length ? 'list only the people above' : 'list only your own household'}.`;
   applyWording();
   const draft = (() => { try { return JSON.parse(lsGet('robbie_draft_' + code) || 'null'); } catch (e) { return null; } })();
   if (inv.rsvp && !inv.can_edit) {
