@@ -269,8 +269,8 @@ $('invTable').addEventListener('click', async (e) => {
   if (t.dataset.text) {
     const i = DATA.invites.find(x => x.id === t.dataset.text);
     const msg = i.invite_type === 'events'
-      ? `Hi, we'd love for you to join us for ${joinList(evNames(i.event_ids))} as we celebrate Robbie's Bar Mitzvah in Israel this April. Please let us know if you can make it here: ${link(i.code)}`
-      : `Hi, we'd love to have you with us in Israel for Robbie's Bar Mitzvah and Passover in Tel Aviv this April. When you have a few minutes, please let us know who's coming and which events you'd like to join here: ${link(i.code)}`;
+      ? `Hi, we'd love for you to join us for ${joinList(evNames(i.event_ids))} as we celebrate Robbie's Bar Mitzvah in Israel this April. Please let us know by December 15 if you can make it here: ${link(i.code)}`
+      : `Hi, we'd love to have you with us in Israel for Robbie's Bar Mitzvah and Passover in Tel Aviv this April. When you have a few minutes, please let us know by December 15 who's coming and which events you'd like to join here: ${link(i.code)}`;
     await copy(msg);
     toast('Message copied');
   }

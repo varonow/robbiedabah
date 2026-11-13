@@ -48,7 +48,7 @@
       </div>
       <ul class="schedule" id="passoverList" style="margin-top:8px"></ul>
       <p id="moneyNote" class="hint hidden" style="font-size:17px;margin-top:18px"></p>
-      <p style="margin:22px 0 0">This RSVP takes about five minutes. Once it’s sent, if anything changes, just text Danielle or Mac.</p>
+      <p style="margin:22px 0 0">Please reply by <strong>Tuesday, December 15</strong>. It takes about five minutes, and once it’s sent, if anything changes, just text Danielle or Mac.</p>
       <div class="step-nav"><span class="spacer"></span><button type="button" class="btn" data-next>Start my RSVP</button></div>
     </section>
 
@@ -788,7 +788,7 @@ function renderEventOnly(inv) {
   EO = EVENTS.filter(e => (inv.event_ids || []).includes(e.id));
   const names = EO.map(e => e.title);
   $('eoTitle').textContent = EO.length === 1 ? EO[0].title : 'Please join us';
-  $('eoLede').textContent = `We\u2019d love for you to join us as we celebrate Robbie\u2019s Bar Mitzvah. Please let us know if you can make it, and how many will be with you.`;
+  $('eoLede').textContent = `We\u2019d love for you to join us as we celebrate Robbie\u2019s Bar Mitzvah. Please let us know by Tuesday, December 15, if you can make it, and how many will be with you.`;
   $('eoEvents').innerHTML = EO.map(e => `<div class="event" id="eo-${e.id}">
     <div class="event-top"><span class="emoji">${e.emoji}</span><div style="flex:1">
       <p class="meta">${fmtLong(e.event_date)}${e.time_label ? ' · ' + esc(e.time_label) : ''}</p>
