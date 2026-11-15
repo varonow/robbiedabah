@@ -49,7 +49,21 @@
       <ul class="schedule" id="passoverList" style="margin-top:8px"></ul>
       <p id="moneyNote" class="hint hidden" style="font-size:17px;margin-top:18px"></p>
       <p style="margin:22px 0 0">Please reply by <strong>Tuesday, December 15</strong>. It takes about five minutes, and once it’s sent, if anything changes, just text Danielle or Mac.</p>
-      <div class="step-nav"><span class="spacer"></span><button type="button" class="btn" data-next>Start my RSVP</button></div>
+      <hr class="rule">
+      <div class="field">
+        <span class="label">Will you be joining us? <span class="req">*</span></span>
+        <div class="choices" data-group="attending">
+          <button type="button" class="choice" data-value="yes"><span class="dot"></span>Yes, we'll be there</button>
+          <button type="button" class="choice" data-value="maybe"><span class="dot"></span>Hoping to, still figuring it out</button>
+          <button type="button" class="choice" data-value="no"><span class="dot"></span>Sadly, we can't make it</button>
+        </div>
+      </div>
+      <div class="field hidden" id="declineBox">
+        <label for="decline_note">We'll miss you. Would you like to leave a mabrook for Robbie and the family?</label>
+        <textarea id="decline_note" maxlength="3000" placeholder="Optional"></textarea>
+      </div>
+      <div class="step-nav"><span class="spacer"></span><button type="button" class="btn" data-next id="welcomeNext">Next: your details</button></div>
+      <p class="error-msg hidden" id="declineError"></p>
     </section>
 
     <!-- ===== Step 1 · Contact ===== -->
@@ -74,21 +88,7 @@
           <input type="tel" id="phone" maxlength="40" autocomplete="tel" placeholder="+1 917 555 0100">
         </div>
       </div>
-      <hr class="rule">
-      <div class="field">
-        <span class="label">Will you be joining us? <span class="req">*</span></span>
-        <div class="choices" data-group="attending">
-          <button type="button" class="choice" data-value="yes"><span class="dot"></span>Yes, we'll be there</button>
-          <button type="button" class="choice" data-value="maybe"><span class="dot"></span>Hoping to, still figuring it out</button>
-          <button type="button" class="choice" data-value="no"><span class="dot"></span>Sadly, we can't make it</button>
-        </div>
-      </div>
-      <div class="field hidden" id="declineBox">
-        <label for="decline_note">We'll miss you. Would you like to leave a note or a mazal tov for Robbie and the family?</label>
-        <textarea id="decline_note" maxlength="3000" placeholder="Optional"></textarea>
-      </div>
       <div class="step-nav"><button type="button" class="btn secondary" data-back>Back</button><button type="button" class="btn" data-next id="contactNext">Next: your party</button></div>
-      <p class="error-msg hidden" id="declineError"></p>
     </section>
 
     <!-- ===== Step 2 · Party ===== -->
@@ -456,7 +456,7 @@ $('addKid').onclick = () => addPerson(true).querySelector('input').focus();
 function refreshDatesStep() {
   const coming = state.attending && state.attending !== 'no';
   $('declineBox').classList.toggle('hidden', state.attending !== 'no');
-  $('contactNext').textContent = state.attending === 'no' ? 'Send my RSVP' : 'Next: your party';
+  $('welcomeNext').textContent = state.attending === 'no' ? 'Send' : 'Next: your details';
   $('datesYes').classList.toggle('hidden', state.dates_known !== 'yes');
   $('datesNo').classList.toggle('hidden', state.dates_known !== 'no');
   $('interestField').classList.toggle('hidden', !(state.trip_plan === 'bm_only' || state.trip_plan === 'unsure'));
@@ -720,8 +720,8 @@ function validateStep(name) {
   if (name === 'contact') {
     ['contact_name', 'phone'].forEach(k => { if (!$(k).value.trim()) bad($(k)); });
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test($('email').value.trim())) bad($('email'));
-    if (!state.attending) bad(document.querySelector('.choices[data-group=attending]'));
   }
+  if (name === 'welcome' && !state.attending) { bad(document.querySelector('.choices[data-group=attending]')); msg = 'Please let us know if you can make it.'; }
   if (name === 'party') {
     const you = document.querySelector('#adults .person-card[data-you] .p-name');
     if (you && !you.value.trim()) bad(you);
@@ -791,7 +791,7 @@ document.addEventListener('click', (e) => {
     if (name === 'hotels') readRooms();
     if (name === 'dates') readFlights();
     if (!validateStep(name)) return;
-    if (name === 'contact' && state.attending === 'no') { doSubmit($('contactNext'), $('declineError')); return; }
+    if (name === 'welcome' && state.attending === 'no') { doSubmit($('welcomeNext'), $('declineError')); return; }
     let n = stepIdx + 1; while (n < STEPS.length - 1 && skip(STEPS[n])) n++;
     show(n);
   }
@@ -818,7 +818,7 @@ function collect() {
   });
   const visIds = new Set(coming ? visibleEvents().map(e => e.id) : []);
   return {
-    household_name: $('household_name').value, contact_name: $('contact_name').value, email: $('email').value, phone: $('phone').value,
+    household_name: $('household_name').value, contact_name: $('contact_name').value.trim() || (state.attending === 'no' ? $('household_name').value : ''), email: $('email').value, phone: $('phone').value,
     attending: state.attending || 'yes',
     arrival_date: coming && state.dates_known === 'yes' ? $('arrival_date').value : '',
     departure_date: coming && state.dates_known === 'yes' ? $('departure_date').value : '',
@@ -859,6 +859,10 @@ function saveDraft() { if (inviteCode && stepIdx > 0) { readRooms(); lsSet('robb
 /* ---------- review ---------- */
 function renderReview(target = 'reviewBody', editable = true) {
   const p = collect(), coming = p.attending !== 'no';
+  if (!coming) {
+    $(target).innerHTML = `<div class="rv"><div class="rv-head"><h4>Your reply</h4></div><p>Sadly, we can’t make it.</p>${p.notes ? `<p>Your mabrook: “${esc(p.notes)}”</p>` : ''}</div>`;
+    return;
+  }
   const sec = (title, step, body) => `<div class="rv"><div class="rv-head"><h4>${title}</h4>${editable ? `<button type="button" class="linkbtn" data-jump="${step}">Edit</button>` : ''}</div>${body}</div>`;
   let h = sec('Contact', 'contact', `<p>${esc(p.contact_name)} · ${esc(p.email)} · ${esc(p.phone)}</p>`);
   h += sec('Your party', 'party', `<ul>${p.members.map(m => `<li>${esc(m.full_name)}${m.is_child && m.age != null ? ` (${m.age})` : ''}${m.email ? ' · ' + esc(m.email) : ''}${m.phone ? ' · ' + esc(m.phone) : ''}</li>`).join('')}</ul>`);
@@ -900,7 +904,7 @@ async function doSubmit(btn, errEl) {
     await rpc('submit_rsvp', { payload: p, invite_code: inviteCode });
     hasRsvp = true;
     try { localStorage.removeItem('robbie_draft_' + inviteCode); } catch (e) {}
-    $('thanksMsg').textContent = p.attending === 'no' ? 'We’ll miss you. Thank you for letting us know.'
+    $('thanksMsg').textContent = p.attending === 'no' ? (p.notes ? 'We’ll miss you. Thank you for your mabrook.' : 'We’ll miss you. Thank you for letting us know.')
       : `Thank you, ${p.contact_name.trim().split(' ')[0]}. We can’t wait to celebrate with you.`;
     $('wizard').classList.add('hidden'); $('thanks').classList.remove('hidden');
     window.scrollTo({ top: 0, behavior: 'smooth' });
