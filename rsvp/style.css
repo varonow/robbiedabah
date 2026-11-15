@@ -88,7 +88,7 @@ label, .label {
 }
 .req { color: var(--danger); }
 .hint { font-size: 16px; color: var(--ink-soft); margin: 6px 0 0; }
-input[type=text], input[type=email], input[type=tel], input[type=number], input[type=date], input[type=search], input[type=password], textarea, select {
+input[type=text], input[type=email], input[type=tel], input[type=number], input[type=date], input[type=time], input[type=search], input[type=password], textarea, select {
   width: 100%; font: inherit; font-size: 19px; color: var(--ink);
   background: #fff; border: 2px solid var(--line); border-radius: 8px;
   padding: 12px 14px; min-height: 52px;
@@ -268,3 +268,28 @@ footer { text-align: center; color: var(--ink-soft); font-size: 16px; padding: 1
   .card h2 { font-size: 28px; }
 }
 @media (max-width: 520px) { .schedule li { grid-template-columns: 1fr 36px; } }
+
+/* ---------- flights ---------- */
+.fl-section { margin: 6px 0 24px; }
+.fl-title { font-family: var(--display); font-weight: 400; font-size: 24px; margin: 0 0 12px; }
+.fl-note { margin: -6px 0 12px; }
+.flight-card { border: 2px solid var(--line); border-radius: var(--radius); padding: 16px; margin-bottom: 14px; background: #fff; }
+.flight-card .fc-head { display: flex; justify-content: space-between; align-items: center; min-height: 40px; margin-bottom: 8px; }
+.flight-card .fc-n { font-family: var(--label); font-weight: 700; font-size: 13px; letter-spacing: .06em; text-transform: uppercase; color: var(--gold-text); }
+.flight-card .icon-btn { width: 40px; height: 40px; font-size: 18px; }
+.flight-card label, .flight-card .label { font-size: 13px; }
+.fc-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.fc-grid .span2 { grid-column: 1 / -1; }
+.fc-who { margin-top: 16px; }
+.opt { text-transform: none; letter-spacing: 0; font-weight: 400; color: var(--ink-soft); }
+.who-boxes { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 8px; }
+.who-boxes .who {
+  display: flex; align-items: center; gap: 10px; margin: 0; cursor: pointer; background: #fff;
+  border: 2px solid var(--line); border-radius: 8px; padding: 10px 12px; min-height: 48px;
+  font-family: var(--body); font-size: 17px; font-weight: 400; text-transform: none; letter-spacing: 0;
+}
+.who-boxes .who input { width: 20px; height: 20px; accent-color: var(--olive); flex: none; }
+.who-boxes .who:has(input:checked) { border-color: var(--olive); background: var(--olive-pale); }
+.who-boxes.invalid .who { border-color: var(--danger); }
+.saved-msg { font-family: var(--label); font-weight: 700; color: var(--ok); margin: 0 0 16px; }
+@media (max-width: 520px) { .fc-grid { grid-template-columns: 1fr; } }

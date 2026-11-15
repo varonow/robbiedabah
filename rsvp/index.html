@@ -158,16 +158,33 @@
           </div>
         </div>
         <hr class="rule">
+        <div id="flightBlock">
         <div class="field">
-          <span class="label">Flights booked?</span>
-          <div class="choices two" data-group="flights_booked">
-            <button type="button" class="choice" data-value="yes"><span class="dot"></span>Yes</button>
+          <span class="label">Have you booked your flights?</span>
+          <div class="choices" data-group="flights_booked">
+            <button type="button" class="choice" data-value="yes"><span class="dot"></span>Yes, all of us</button>
+            <button type="button" class="choice" data-value="some"><span class="dot"></span>Some of us</button>
             <button type="button" class="choice" data-value="no"><span class="dot"></span>Not yet</button>
           </div>
+          <p class="hint">No rush. After you send your RSVP, you can open this same link anytime to add or change your flights.</p>
         </div>
+        <div id="flightBuilder" class="hidden">
+          <div class="fl-section">
+            <h3 class="fl-title">✈️ Arriving in Israel</h3>
+            <div id="fl-arrive"></div>
+            <button type="button" class="add-btn" data-addflight="arrive">＋ Add another arriving flight</button>
+          </div>
+          <div class="fl-section">
+            <h3 class="fl-title">🛫 Leaving Israel</h3>
+            <p class="hint fl-note">Haven't booked your way home yet? Leave this blank and add it later.</p>
+            <div id="fl-depart"></div>
+            <button type="button" class="add-btn" data-addflight="depart">＋ Add another departing flight</button>
+          </div>
+        </div>
+        <datalist id="airlines"></datalist>
         <div class="field">
-          <label for="flight_notes">Flight details</label>
-          <textarea id="flight_notes" maxlength="1000" placeholder="Airline, flight number and arrival time, or anything you know so far"></textarea>
+          <label for="flight_notes">Anything else about your travel? <span class="opt">(optional)</span></label>
+          <textarea id="flight_notes" maxlength="1000" placeholder="For example, a connection through Paris, or grandparents flying in on a different day"></textarea>
         </div>
         <div class="field">
           <span class="label">Airport VIP service &amp; transfers</span>
@@ -177,6 +194,7 @@
             <button type="button" class="choice" data-value="unsure"><span class="dot"></span>Not sure yet</button>
           </div>
           <p class="hint" id="transferHint">VIP meet-and-greet through the airport plus a private car to the hotel, arriving and departing.</p>
+        </div>
         </div>
       </div>
       <div class="step-nav"><button type="button" class="btn secondary" data-back>Back</button><button type="button" class="btn" data-next id="datesNext">Next: hotels</button></div>
@@ -274,7 +292,22 @@
     <p class="step-label">Welcome back</p>
     <h2><span class="ico">✅</span> We have your RSVP</h2>
     <p class="lede">Here’s what you sent us. If anything changes, just text Danielle or Mac and they’ll update it for you.</p>
+    <p class="saved-msg hidden" id="flightsSaved">✓ Your flights are saved.</p>
     <div id="receivedBody"></div>
+    <div id="flightsCta" class="hidden">
+      <hr class="rule">
+      <p style="margin:0 0 14px">Booked your flights, or need to change them? You can update them here anytime.</p>
+      <button type="button" class="btn" id="editFlightsBtn">✈️ Add or update flights</button>
+    </div>
+  </section>
+
+  <section class="card hidden" id="flightsOnly" style="margin-top:-36px;position:relative">
+    <p class="step-label">Your flights</p>
+    <h2><span class="ico">✈️</span> Add or update flights</h2>
+    <p class="lede">Only your flights and airport transfers change here. The rest of your RSVP stays as it is.</p>
+    <div id="flightsOnlyBody"></div>
+    <div class="step-nav"><button type="button" class="btn secondary" id="flightsCancel">Cancel</button><button type="button" class="btn" id="flightsSave">Save my flights</button></div>
+    <p class="error-msg hidden" id="flightsError"></p>
   </section>
 </main>
 
@@ -305,7 +338,7 @@ const DAY_LABELS = {
 
 const $ = (id) => document.getElementById(id);
 const state = { attending: null, dates_known: null, trip_plan: null, passover_interest: null, flights_booked: null, wants_transfer: null,
-  hotel_jerusalem: null, hotel_telaviv: null, rooms_adjoining: null, rooms: { jerusalem: [], telaviv: [] }, events: {} };
+  hotel_jerusalem: null, hotel_telaviv: null, rooms_adjoining: null, rooms: { jerusalem: [], telaviv: [] }, events: {}, flights: [] };
 let EVENTS = [];
 let inviteCode = null, hasRsvp = false, stepIdx = 0;
 let PAYS = { rooms: false, transfers: false, meals: false, activities: false };
@@ -353,7 +386,7 @@ function applyWording() {
 }
 
 /* ---------- segmented choices ---------- */
-function clearErrors() { ['stepError', 'declineError'].forEach(id => $(id) && $(id).classList.add('hidden')); }
+function clearErrors() { ['stepError', 'declineError', 'flightsError'].forEach(id => $(id) && $(id).classList.add('hidden')); }
 document.addEventListener('input', (e) => { if (e.target.classList) e.target.classList.remove('invalid'); clearErrors(); });
 function setChoice(group, value) {
   state[group] = value; clearErrors();
@@ -430,6 +463,13 @@ function refreshDatesStep() {
   $('datesNo').classList.toggle('hidden', state.dates_known !== 'no');
   $('interestField').classList.toggle('hidden', !(state.trip_plan === 'bm_only' || state.trip_plan === 'unsure'));
   $('datesNext').textContent = state.attending === 'no' ? 'Next: review' : 'Next: hotels';
+  const showFl = flightsOn();
+  $('flightBuilder').classList.toggle('hidden', !showFl);
+  if (showFl && ['arrive', 'depart'].some(d => !state.flights.some(l => l.dir === d))) {
+    readFlights();
+    ['arrive', 'depart'].forEach(d => { if (!state.flights.some(l => l.dir === d)) state.flights.push(blankLeg(d, true)); });
+    paintFlights();
+  }
 }
 function stay() {
   if (state.dates_known === 'yes' && $('arrival_date').value && $('departure_date').value)
@@ -443,6 +483,88 @@ function inPassover() {
   return state.trip_plan === 'bm_only' && (state.passover_interest === 'yes' || state.passover_interest === 'maybe');
 }
 function inJerusalem() { const s = stay(); return s ? (s.from <= '2027-04-20' && s.to >= '2027-04-16') : true; }
+
+/* ---------- flights ---------- */
+const AIRLINES = ['El Al', 'United', 'Delta', 'American', 'Arkia', 'Israir', 'JetBlue', 'Lufthansa', 'British Airways', 'Air France', 'KLM', 'Swiss', 'Austrian', 'ITA Airways', 'Aegean', 'Turkish Airlines', 'Emirates', 'Air Canada', 'Virgin Atlantic', 'LOT'];
+$('airlines').innerHTML = AIRLINES.map(a => `<option value="${esc(a)}">`).join('');
+function flightsOn() { return state.flights_booked === 'yes' || state.flights_booked === 'some'; }
+function blankLeg(dir, everyone) { return { dir, airline: '', number: '', date: '', time: '', airport: '', everyone: !!everyone, who: [] }; }
+function legFilled(l) { return !!(l.airline || l.number || l.date || l.time || l.airport); }
+function partyNames() { return getMembers().map(m => m.full_name); }
+function fmtTime(t) { if (!t) return ''; const [h, m] = t.split(':').map(Number); return `${((h + 11) % 12) + 1}:${String(m).padStart(2, '0')} ${h < 12 ? 'AM' : 'PM'}`; }
+function flightCard(l, i, n, names, total) {
+  const arr = l.dir === 'arrive';
+  const on = l.everyone ? new Set(names) : new Set(l.who);
+  return `<div class="flight-card" data-i="${i}">
+    <div class="fc-head"><span class="fc-n">${arr ? 'Arriving' : 'Departing'} flight${total > 1 ? ' ' + (n + 1) : ''}</span>
+      ${total > 1 ? '<button type="button" class="icon-btn" data-rmflight aria-label="Remove this flight">✕</button>' : ''}</div>
+    <div class="fc-grid">
+      <div><label>Airline</label><input type="text" class="f-airline" list="airlines" maxlength="60" value="${esc(l.airline)}"></div>
+      <div><label>Flight number</label><input type="text" class="f-number" maxlength="12" placeholder="e.g. LY 8" autocapitalize="characters" value="${esc(l.number)}"></div>
+      <div><label>${arr ? 'Landing date' : 'Departure date'}</label><input type="date" class="f-date" min="2027-04-01" max="2027-05-15" value="${esc(l.date)}"></div>
+      <div><label>${arr ? 'Landing time' : 'Takeoff time'}</label><input type="time" class="f-time" value="${esc(l.time)}"></div>
+      <div class="span2"><label>${arr ? 'Flying from' : 'Flying to'} <span class="opt">(optional)</span></label><input type="text" class="f-airport" maxlength="60" placeholder="City or airport, e.g. JFK" value="${esc(l.airport)}"></div>
+    </div>
+    ${names.length > 1 ? `<span class="label fc-who">Who's on this flight?</span>
+      <div class="who-boxes">${names.map(nm => `<label class="who"><input type="checkbox" value="${esc(nm)}" ${on.has(nm) ? 'checked' : ''}> ${esc(nm)}</label>`).join('')}</div>` : ''}
+  </div>`;
+}
+function paintFlights() {
+  const names = partyNames();
+  ['arrive', 'depart'].forEach(dir => {
+    const legs = state.flights.map((l, i) => ({ l, i })).filter(x => x.l.dir === dir);
+    $('fl-' + dir).innerHTML = legs.map(({ l, i }, n) => flightCard(l, i, n, names, legs.length)).join('');
+  });
+}
+function readFlights() {
+  document.querySelectorAll('.flight-card').forEach(c => {
+    const l = state.flights[+c.dataset.i]; if (!l) return;
+    l.airline = c.querySelector('.f-airline').value.trim();
+    l.number = c.querySelector('.f-number').value.replace(/\s+/g, '').toUpperCase();
+    l.date = c.querySelector('.f-date').value;
+    l.time = c.querySelector('.f-time').value;
+    l.airport = c.querySelector('.f-airport').value.trim();
+    const boxes = [...c.querySelectorAll('.who input')];
+    if (boxes.length) { const ck = boxes.filter(b => b.checked).map(b => b.value); l.everyone = ck.length === boxes.length; l.who = l.everyone ? [] : ck; }
+    else { l.everyone = true; l.who = []; }
+  });
+}
+function flightLegs() { readFlights(); return flightsOn() ? state.flights.filter(legFilled).map(l => ({ ...l })) : []; }
+function validateFlights(bad) {
+  if (!flightsOn()) return null;
+  readFlights();
+  let msg = null;
+  document.querySelectorAll('.flight-card').forEach(c => {
+    const l = state.flights[+c.dataset.i]; if (!l || !legFilled(l)) return;
+    if (!l.number) bad(c.querySelector('.f-number'));
+    if (!l.date) bad(c.querySelector('.f-date'));
+    if (!l.time) bad(c.querySelector('.f-time'));
+    const boxes = c.querySelector('.who-boxes');
+    if (boxes && !boxes.querySelector('input:checked')) { bad(boxes); msg = 'Please tick who is on each flight.'; }
+  });
+  if (!state.flights.some(l => legFilled(l))) {
+    const c = document.querySelector('#fl-arrive .flight-card');
+    if (c) bad(c.querySelector('.f-number'));
+    msg = 'Please add at least one flight, or choose “Not yet.”';
+  }
+  return msg;
+}
+document.addEventListener('click', (e) => {
+  const add = e.target.closest('[data-addflight]');
+  if (add) {
+    readFlights(); state.flights.push(blankLeg(add.dataset.addflight, false)); paintFlights();
+    const cards = document.querySelectorAll(`#fl-${add.dataset.addflight} .flight-card`);
+    cards[cards.length - 1].querySelector('input').focus();
+    return;
+  }
+  const rm = e.target.closest('[data-rmflight]');
+  if (rm) { readFlights(); state.flights.splice(+rm.closest('.flight-card').dataset.i, 1); paintFlights(); }
+});
+document.addEventListener('change', (e) => { if (e.target.closest('.who-boxes')) e.target.closest('.who-boxes').classList.remove('invalid'); });
+function legLine(l) {
+  const who = l.everyone ? '' : ` · ${esc(joinList(l.who))}`;
+  return `<li>${l.dir === 'arrive' ? '✈️ Arriving' : '🛫 Leaving'} ${l.date ? fmtShort(l.date) : ''}${l.time ? ' at ' + fmtTime(l.time) : ''} · ${esc([l.airline, l.number].filter(Boolean).join(' '))}${l.airport ? ` ${l.dir === 'arrive' ? 'from' : 'to'} ${esc(l.airport)}` : ''}${who}</li>`;
+}
 
 /* ---------- hotels ---------- */
 function renderHotels() {
@@ -620,6 +742,7 @@ function validateStep(name) {
         if (!state.trip_plan) bad(document.querySelector('.choices[data-group=trip_plan]'));
         if ((state.trip_plan === 'bm_only' || state.trip_plan === 'unsure') && !state.passover_interest) bad(document.querySelector('.choices[data-group=passover_interest]'));
       }
+      const fm = validateFlights(bad); if (fm) msg = fm;
     }
   }
   if (name === 'hotels') {
@@ -652,6 +775,7 @@ function show(idx) {
   stepIdx = idx;
   const name = STEPS[idx];
   if (name === 'party') syncYou();
+  if (name === 'dates' && flightsOn()) paintFlights();
   if (name === 'hotels') renderHotels();
   if (name === 'events') renderEvents();
   if (name === 'review') renderReview();
@@ -667,6 +791,7 @@ document.addEventListener('click', (e) => {
   if (e.target.closest('[data-next]')) {
     const name = STEPS[stepIdx];
     if (name === 'hotels') readRooms();
+    if (name === 'dates') readFlights();
     if (!validateStep(name)) return;
     if (name === 'contact' && state.attending === 'no') { doSubmit($('contactNext'), $('declineError')); return; }
     let n = stepIdx + 1; while (n < STEPS.length - 1 && skip(STEPS[n])) n++;
@@ -674,6 +799,7 @@ document.addEventListener('click', (e) => {
   }
   if (e.target.closest('[data-back]')) {
     if (STEPS[stepIdx] === 'hotels') readRooms();
+    if (STEPS[stepIdx] === 'dates') readFlights();
     let n = stepIdx - 1; while (n > 0 && skip(STEPS[n])) n--;
     show(n);
   }
@@ -701,6 +827,7 @@ function collect() {
     trip_plan: coming && state.dates_known === 'no' ? (state.trip_plan || '') : '',
     passover_interest: coming && state.dates_known === 'no' && (state.trip_plan === 'bm_only' || state.trip_plan === 'unsure') ? (state.passover_interest || '') : '',
     flights_booked: coming ? (state.flights_booked || '') : '', flight_notes: coming ? $('flight_notes').value : '',
+    flight_legs: coming ? flightLegs() : [],
     wants_transfer: coming ? (state.wants_transfer || '') : '',
     ...hotels, room_requests,
     rooms_adjoining: coming && !$('adjoinField').classList.contains('hidden') ? (state.rooms_adjoining || '') : '',
@@ -712,6 +839,7 @@ function collect() {
 function fill(d) {
   ['household_name', 'contact_name', 'email', 'phone', 'arrival_date', 'departure_date', 'flight_notes', 'room_notes', 'notes']
     .forEach(k => { if (d[k] != null) $(k).value = d[k]; });
+  state.flights = (d.flight_legs || []).map(l => ({ ...blankLeg(l.dir), ...l, airline: l.airline || '', number: l.number || '', date: l.date || '', time: l.time || '', airport: l.airport || '', who: l.who || [] }));
   if (d.arrival_date || d.departure_date) state.dates_known = 'yes';
   else if (d.trip_plan) state.dates_known = 'no';
   ['attending', 'trip_plan', 'passover_interest', 'flights_booked', 'wants_transfer', 'hotel_jerusalem', 'hotel_telaviv', 'rooms_adjoining']
@@ -722,6 +850,7 @@ function fill(d) {
   state.rooms = { jerusalem: rr.jerusalem || [], telaviv: rr.telaviv || [] };
   $('adults').innerHTML = ''; $('kids').innerHTML = '';
   (d.members || []).forEach((m, i) => addPerson(m.is_child, m, i === 0 && !m.is_child));
+  if (flightsOn()) paintFlights();
   state.events = {};
   (d.events || []).forEach(e => { state.events[e.event_id] = { choice: e.choice, adults: e.adults, kids: e.kids }; });
   if (d.attending === 'no' && d.notes) { $('decline_note').value = d.notes; $('notes').value = ''; }
@@ -740,7 +869,9 @@ function renderReview(target = 'reviewBody', editable = true) {
   if (coming) {
     if (p.arrival_date) dates += `<p>${fmtShort(p.arrival_date)} to ${fmtShort(p.departure_date)}</p>`;
     else dates += `<p>${{ bm_only: 'Bar Mitzvah celebrations only', passover_full: 'Bar Mitzvah + all of Passover', passover_first: 'Bar Mitzvah + first half of Passover', passover_second: 'Bar Mitzvah + second half of Passover', unsure: 'Not sure yet' }[p.trip_plan] || ''}${p.passover_interest ? ' · Passover interest: ' + p.passover_interest : ''}</p>`;
-    if (p.flight_notes) dates += `<p>Flights: ${esc(p.flight_notes)}</p>`;
+    if (p.flights_booked) dates += `<p>Flights booked: ${{ yes: 'yes', some: 'some of us', no: 'not yet' }[p.flights_booked]}</p>`;
+    if (p.flight_legs.length) dates += `<ul>${['arrive', 'depart'].flatMap(d => p.flight_legs.filter(l => l.dir === d)).map(legLine).join('')}</ul>`;
+    if (p.flight_notes) dates += `<p>Travel notes: ${esc(p.flight_notes)}</p>`;
     if (p.wants_transfer) dates += `<p>VIP &amp; transfers: ${{ yes: 'please book', no: 'we’ll handle it', unsure: 'not sure yet' }[p.wants_transfer]}</p>`;
   }
   h += sec('Dates & travel', 'dates', dates);
@@ -841,6 +972,32 @@ $('eoSubmit').onclick = async () => {
   finally { btn.disabled = false; btn.textContent = hasRsvp ? 'Update my RSVP' : 'Send my RSVP'; }
 };
 
+/* ---------- add or update flights after the RSVP is locked ---------- */
+$('editFlightsBtn').onclick = () => {
+  $('flightsOnlyBody').appendChild($('flightBlock'));
+  refreshDatesStep(); if (flightsOn()) paintFlights();
+  $('flightsSaved').classList.add('hidden');
+  $('received').classList.add('hidden'); $('flightsOnly').classList.remove('hidden');
+  window.scrollTo({ top: document.querySelector('.band').offsetTop, behavior: 'smooth' });
+};
+$('flightsCancel').onclick = () => location.reload();
+$('flightsSave').onclick = async () => {
+  let first = null; const bad = (el) => { el.classList.add('invalid'); first ||= el; };
+  document.querySelectorAll('#flightsOnly .invalid').forEach(x => x.classList.remove('invalid'));
+  const msg = validateFlights(bad), err = $('flightsError');
+  if (first) { first.scrollIntoView({ behavior: 'smooth', block: 'center' }); err.textContent = msg || 'Please fill in the highlighted items.'; err.classList.remove('hidden'); return; }
+  err.classList.add('hidden');
+  const btn = $('flightsSave'); btn.disabled = true; btn.textContent = 'Saving…';
+  try {
+    await rpc('update_flights', { invite_code: inviteCode, flights_booked: state.flights_booked || '', flight_legs: flightLegs(),
+      flight_notes: $('flight_notes').value, wants_transfer: state.wants_transfer || '' });
+    renderReview('receivedBody', false);
+    $('flightsOnly').classList.add('hidden'); $('received').classList.remove('hidden'); $('flightsSaved').classList.remove('hidden');
+    window.scrollTo({ top: document.querySelector('.band').offsetTop, behavior: 'smooth' });
+  } catch (e) { err.textContent = 'Sorry, that didn’t save: ' + e.message + '. Please try again.'; err.classList.remove('hidden'); }
+  finally { btn.disabled = false; btn.textContent = 'Save my flights'; }
+};
+
 /* ---------- init ---------- */
 (async function init() {
   const params = new URLSearchParams(location.search);
@@ -885,6 +1042,7 @@ $('eoSubmit').onclick = async () => {
   const draft = (() => { try { return JSON.parse(lsGet('robbie_draft_' + code) || 'null'); } catch (e) { return null; } })();
   if (inv.rsvp && !inv.can_edit) {
     fill(inv.rsvp); renderReview('receivedBody', false);
+    $('flightsCta').classList.toggle('hidden', inv.rsvp.attending === 'no');
     $('received').classList.remove('hidden');
     return;
   }

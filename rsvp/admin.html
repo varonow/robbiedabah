@@ -69,11 +69,13 @@
       <button class="tab" data-tab="overview" aria-selected="true">Overview</button>
       <button class="tab" data-tab="events">Headcounts</button>
       <button class="tab" data-tab="invites">Invites &amp; links</button>
+      <button class="tab" data-tab="flights">Arrivals</button>
       <button class="tab" data-tab="responses">Responses</button>
     </div>
 
     <div data-panel="overview"></div>
     <div data-panel="events" class="hidden"></div>
+    <div data-panel="flights" class="hidden"></div>
     <div data-panel="invites" class="hidden">
       <section class="card">
         <h2 id="invFormTitle"><span class="ico">➕</span> Add a family</h2>
@@ -160,7 +162,7 @@ function people(h) { const m = h ? h.members : []; return { a: m.filter(x => !x.
 
 function renderAll() {
   $('inv_events').innerHTML = DATA.events.map(e => `<label><input type="checkbox" class="inv-ev" value="${e.id}"> ${e.emoji} ${fmt(e.event_date)} · ${esc(e.title)}</label>`).join('');
-  renderOverview(); renderEvents(); renderInvites(); renderResponses();
+  renderOverview(); renderEvents(); renderInvites(); renderFlights(); renderResponses();
 }
 $('inv_type').onchange = () => $('inv_events_wrap').classList.toggle('hidden', $('inv_type').value !== 'events');
 function evNames(ids) { return DATA.events.filter(e => ids.includes(e.id)).map(e => e.title); }
@@ -317,6 +319,72 @@ $('invSave').onclick = async () => {
 };
 async function copy(t) { try { await navigator.clipboard.writeText(t); } catch (e) { const a = document.createElement('textarea'); a.value = t; document.body.appendChild(a); a.select(); document.execCommand('copy'); a.remove(); } }
 
+/* ---------- arrivals & departures ---------- */
+function fmtTime(t) { if (!t) return ''; const [h, m] = t.split(':').map(Number); return `${((h + 11) % 12) + 1}:${String(m).padStart(2, '0')} ${h < 12 ? 'AM' : 'PM'}`; }
+const TRANSFER = { yes: 'Yes', no: 'No', unsure: 'Not sure' };
+function allLegs() {
+  const out = [];
+  DATA.invites.forEach(i => {
+    const h = i.household; if (!h || h.attending === 'no') return;
+    (h.flight_legs || []).forEach(l => {
+      const names = l.everyone ? h.members.map(m => m.full_name) : (l.who || []);
+      out.push({ ...l, inv: i, h, names, n: names.length });
+    });
+  });
+  return out.sort((a, b) => (a.date || '9').localeCompare(b.date || '9') || (a.time || '99').localeCompare(b.time || '99'));
+}
+function legTable(legs, dir) {
+  if (!legs.length) return `<p class="muted">No ${dir === 'arrive' ? 'arrivals' : 'departures'} entered yet.</p>`;
+  let html = `<div class="tablewrap"><table><thead><tr><th>${dir === 'arrive' ? 'Lands' : 'Takes off'}</th><th>Flight</th><th>${dir === 'arrive' ? 'From' : 'To'}</th><th>Family</th><th>Who</th><th class="num">People</th><th>VIP &amp; transfers</th><th>Phone</th></tr></thead><tbody>`;
+  let last = '';
+  legs.forEach(l => {
+    if (l.date !== last) {
+      const dayLegs = legs.filter(x => x.date === l.date);
+      html += `<tr class="daysep"><td colspan="8">${l.date ? fmt(l.date) : 'No date'} · ${(n => n + (n === 1 ? ' person' : ' people'))(dayLegs.reduce((s, x) => s + x.n, 0))}</td></tr>`; last = l.date;
+    }
+    html += `<tr><td><strong>${fmtTime(l.time) || '—'}</strong></td><td>${esc([l.airline, l.number].filter(Boolean).join(' '))}</td><td>${esc(l.airport || '')}</td>
+      <td>${esc(l.h.household_name)}</td><td>${l.everyone ? '<span class="muted">Everyone</span> ' : ''}${esc(l.names.join(', '))}</td><td class="num">${l.n}</td>
+      <td>${TRANSFER[l.h.wants_transfer] || '—'}</td><td>${esc(l.h.phone || '')}</td></tr>`;
+  });
+  return html + '</tbody></table></div>';
+}
+function renderFlights() {
+  const legs = allLegs(), arr = legs.filter(l => l.dir === 'arrive'), dep = legs.filter(l => l.dir === 'depart');
+  const coming = DATA.invites.filter(i => i.invite_type !== 'events' && i.household && i.household.attending !== 'no');
+  const noArr = coming.filter(i => !(i.household.flight_legs || []).some(l => l.dir === 'arrive'));
+  const noDep = coming.filter(i => (i.household.flight_legs || []).some(l => l.dir === 'arrive') && !(i.household.flight_legs || []).some(l => l.dir === 'depart'));
+  const booked = { yes: 'says booked', some: 'some booked', no: 'not booked yet' };
+  $$panel('flights').innerHTML = `
+    <div class="tiles">
+      <div class="tile"><div class="n">${coming.length - noArr.length}</div><div class="l">Families with arrivals entered</div></div>
+      <div class="tile"><div class="n">${noArr.length}</div><div class="l">Families with no flights yet</div></div>
+      <div class="tile"><div class="n">${arr.reduce((s, l) => s + l.n, 0)}</div><div class="l">People with an arriving flight</div></div>
+      <div class="tile"><div class="n">${dep.reduce((s, l) => s + l.n, 0)}</div><div class="l">People with a departing flight</div></div>
+      <div class="tile"><div class="n">${coming.filter(i => i.household.wants_transfer === 'yes').length}</div><div class="l">Families wanting VIP &amp; transfers</div></div>
+    </div>
+    <p class="muted">Families add or change flights themselves from their own link, even after their RSVP is locked. Times are local Israel times as the family entered them.</p>
+    <section class="card"><h2><span class="ico">✈️</span> Arrivals</h2>${legTable(arr, 'arrive')}</section>
+    <section class="card"><h2><span class="ico">🛫</span> Departures</h2>${legTable(dep, 'depart')}</section>
+    <section class="card"><h2><span class="ico">⏳</span> No flights entered yet</h2>
+      <p>${noArr.map(i => `${esc(i.household.household_name)} <span class="muted">(${booked[i.household.flights_booked] || 'didn’t say'}${i.household.wants_transfer === 'yes' ? ', wants transfers' : ''})</span>`).join(' · ') || 'Every family coming has entered an arriving flight.'}</p>
+      ${noDep.length ? `<h4>Arrival entered, departure missing</h4><p>${noDep.map(i => esc(i.household.household_name)).join(' · ')}</p>` : ''}
+      <p class="muted">To remind them, use Copy link on the Invites &amp; links tab. When they open it, there’s an “Add or update flights” button under their RSVP.</p></section>
+    <section class="card"><h2><span class="ico">⬇️</span> Export</h2>
+      <p class="muted">One row per flight, for the planner or the transfer company.</p>
+      <button class="btn secondary" onclick="exportFlights()">Flights spreadsheet</button></section>`;
+}
+function exportFlights() {
+  const rows = [['Direction', 'Date', 'Time', 'Airline', 'Flight', 'From / To', 'Family', 'Passengers', 'People', 'VIP & transfers', 'Contact', 'Phone', 'Email', 'Flights updated']];
+  allLegs().forEach(l => rows.push([l.dir === 'arrive' ? 'Arriving' : 'Departing', l.date, l.time, l.airline, l.number, l.airport, l.h.household_name, l.names.join(', '), l.n,
+    TRANSFER[l.h.wants_transfer] || '', l.h.contact_name, l.h.phone, l.h.email, l.h.flights_updated_at ? new Date(l.h.flights_updated_at).toLocaleString() : '']));
+  download('robbie-flights.csv', csv(rows));
+}
+function legsHtml(h) {
+  const legs = (h.flight_legs || []).slice().sort((a, b) => (a.dir === b.dir ? 0 : a.dir === 'arrive' ? -1 : 1) || (a.date || '').localeCompare(b.date || ''));
+  if (!legs.length) return '';
+  return '<ul>' + legs.map(l => `<li>${l.dir === 'arrive' ? '✈️ In' : '🛫 Out'} ${fmt(l.date)} ${fmtTime(l.time)} · ${esc([l.airline, l.number].filter(Boolean).join(' '))}${l.airport ? ' · ' + esc(l.airport) : ''}${l.everyone ? '' : ' · ' + esc((l.who || []).join(', '))}</li>`).join('') + '</ul>';
+}
+
 function renderResponses() {
   const resp = DATA.invites.filter(i => i.household).sort((a, b) => (b.household.updated_at || '').localeCompare(a.household.updated_at || ''));
   const ev = Object.fromEntries(DATA.events.map(e => [e.id, e]));
@@ -334,7 +402,7 @@ function renderResponses() {
         <div><h4>Contact</h4>${esc(h.contact_name)}<br>${esc(h.email)}<br>${esc(h.phone || '')}</div>
         <div><h4>Attending</h4>${{ yes: 'Yes', maybe: 'Maybe', no: 'Can’t come' }[h.attending]}<br>
           ${h.arrival_date ? fmt(h.arrival_date) + ' to ' + fmt(h.departure_date) : esc(plan[h.trip_plan] || 'No dates')}${h.passover_interest ? '<br>Passover interest: ' + h.passover_interest : ''}</div>
-        <div><h4>Travel</h4>Flights booked: ${h.flights_booked || '—'}<br>VIP &amp; transfers: ${h.wants_transfer || '—'}${h.flight_notes ? '<br>' + esc(h.flight_notes) : ''}</div>
+        <div><h4>Travel</h4>Flights booked: ${h.flights_booked || '—'}<br>VIP &amp; transfers: ${h.wants_transfer || '—'}${legsHtml(h)}${h.flight_notes ? esc(h.flight_notes) : ''}</div>
       </div>
       <h4>Party</h4><ul>${h.members.map(m => `<li>${esc(m.full_name)}${m.is_child ? ` (${m.age ?? '?'})` : ''}${m.email ? ' · ' + esc(m.email) : ''}${m.phone ? ' · ' + esc(m.phone) : ''}</li>`).join('')}</ul>
       <div class="grid">
@@ -355,13 +423,14 @@ function exportPeople() {
   download('robbie-rsvp-people.csv', csv(rows));
 }
 function exportHouseholds() {
-  const head = ['Family', 'Contact', 'Email', 'Phone', 'Attending', 'Arrive', 'Depart', 'Plan', 'Passover interest', 'Adults', 'Kids', 'VIP & transfers', 'King David', 'KD rooms', 'InterContinental', 'IC rooms', 'Adjoining', 'Room notes', 'Notes', 'Comp status', 'Covered by', 'Link'];
+  const head = ['Family', 'Contact', 'Email', 'Phone', 'Attending', 'Arrive', 'Depart', 'Plan', 'Passover interest', 'Adults', 'Kids', 'VIP & transfers', 'King David', 'KD rooms', 'InterContinental', 'IC rooms', 'Adjoining', 'Room notes', 'Notes', 'Flights booked', 'Flights', 'Comp status', 'Covered by', 'Link'];
   const rows = [head.concat(DATA.events.map(e => `${fmt(e.event_date)} ${e.title}`))];
   DATA.invites.forEach(i => {
     const h = i.household, p = people(h), rr = (h && h.room_requests) || {};
     const base = h ? [h.household_name, h.contact_name, h.email, h.phone, h.attending, h.arrival_date, h.departure_date, h.trip_plan, h.passover_interest, p.a, p.k, h.wants_transfer, h.hotel_jerusalem,
-      (rr.jerusalem || []).map(r => r.type).join('; '), h.hotel_telaviv, (rr.telaviv || []).map(r => r.type).join('; '), h.rooms_adjoining, h.room_notes, h.notes]
-      : [i.label, '', '', '', 'not responded', '', '', '', '', '', '', '', '', '', '', '', '', '', ''];
+      (rr.jerusalem || []).map(r => r.type).join('; '), h.hotel_telaviv, (rr.telaviv || []).map(r => r.type).join('; '), h.rooms_adjoining, h.room_notes, h.notes, h.flights_booked,
+      (h.flight_legs || []).map(l => `${l.dir === 'arrive' ? 'In' : 'Out'} ${l.date || ''} ${l.time || ''} ${[l.airline, l.number].filter(Boolean).join(' ')}${l.everyone ? '' : ' (' + (l.who || []).join(', ') + ')'}`).join('; ')]
+      : [i.label, '', '', '', 'not responded', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', ''];
     rows.push(base.concat([statusText(i), i.covered_by, link(i.code)], DATA.events.map(e => { const r = h && h.events.find(x => x.event_id === e.id); return r && r.choice !== 'none' ? r.adults + r.kids : ''; })));
   });
   download('robbie-rsvp-families.csv', csv(rows));
