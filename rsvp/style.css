@@ -293,3 +293,6 @@ footer { text-align: center; color: var(--ink-soft); font-size: 16px; padding: 1
 .who-boxes.invalid .who { border-color: var(--danger); }
 .saved-msg { font-family: var(--label); font-weight: 700; color: var(--ok); margin: 0 0 16px; }
 @media (max-width: 520px) { .fc-grid { grid-template-columns: 1fr; } }
+
+.invite-for { font-family: var(--label); font-size: 15px; letter-spacing: .04em; color: var(--ink-soft); background: var(--olive-pale); border-radius: 8px; padding: 12px 14px; margin: 0 0 20px; }
+.invite-for strong { color: var(--ink); font-size: 17px; letter-spacing: 0; }

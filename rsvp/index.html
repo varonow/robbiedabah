@@ -58,10 +58,8 @@
       <p class="step-label">Step 1 of 6</p>
       <h2><span class="ico">👋</span> Your details</h2>
       <p class="lede">The main contact for your family.</p>
-      <div class="field">
-        <label for="household_name">Family name <span class="req">*</span></label>
-        <input type="text" id="household_name" maxlength="120" placeholder="e.g. The Harari Family">
-      </div>
+      <p class="invite-for">Invitation for <strong id="familyLabel"></strong></p>
+      <input type="hidden" id="household_name">
       <div class="field">
         <label for="contact_name">Your full name <span class="req">*</span></label>
         <input type="text" id="contact_name" maxlength="120" autocomplete="name">
@@ -720,7 +718,7 @@ function validateStep(name) {
   document.querySelectorAll(`[data-step="${name}"] .invalid`).forEach(el => el.classList.remove('invalid'));
   let msg = 'Please fill in the highlighted items.';
   if (name === 'contact') {
-    ['household_name', 'contact_name', 'phone'].forEach(k => { if (!$(k).value.trim()) bad($(k)); });
+    ['contact_name', 'phone'].forEach(k => { if (!$(k).value.trim()) bad($(k)); });
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test($('email').value.trim())) bad($('email'));
     if (!state.attending) bad(document.querySelector('.choices[data-group=attending]'));
   }
@@ -998,6 +996,16 @@ $('flightsSave').onclick = async () => {
   finally { btn.disabled = false; btn.textContent = 'Save my flights'; }
 };
 
+function greetName(label) {
+  // "Joyce & Mousa Saad" -> "Joyce & Mousa"; "Stephanie Aronow" -> "Stephanie"; "Rabbi Medina" stays
+  const s = String(label || '').trim().replace(/\s+and\s+/gi, ' & ').replace(/\s*&\s*family$/i, '');
+  if (/^rabbi\b/i.test(s)) return s;
+  const parts = s.split(/\s*&\s*/);
+  if (parts.length === 1) return s.split(/\s+/)[0];
+  if (parts[parts.length - 1].split(/\s+/).length < 2) return parts.join(' & ');
+  return parts.map(p => { const w = p.split(/\s+/); return w.length > 1 && !p.includes(',') ? w.slice(0, -1).join(' ') : p; }).join(' & ');
+}
+
 /* ---------- init ---------- */
 (async function init() {
   const params = new URLSearchParams(location.search);
@@ -1046,9 +1054,11 @@ $('flightsSave').onclick = async () => {
     $('received').classList.remove('hidden');
     return;
   }
-  if (inv.rsvp) { fill(inv.rsvp); hasRsvp = true; $('submitBtn').textContent = 'Update my RSVP'; $('greeting').textContent = 'Welcome back'; }
-  else if (draft) { fill(draft); $('greeting').textContent = 'Welcome back'; }
-  else { $('household_name').value = inv.label || ''; }
+  const gn = greetName(inv.label);
+  $('greeting').textContent = gn ? `${gn}, you're invited` : 'You’re invited';
+  if (inv.rsvp) { fill(inv.rsvp); hasRsvp = true; $('submitBtn').textContent = 'Update my RSVP'; $('greeting').textContent = gn ? `Welcome back, ${gn}` : 'Welcome back'; }
+  else if (draft) { fill(draft); $('greeting').textContent = gn ? `Welcome back, ${gn}` : 'Welcome back'; }
+  $('household_name').value = inv.label || ''; $('familyLabel').textContent = inv.label || '';
   refreshDatesStep();
   $('wizard').classList.remove('hidden');
   show(0);
