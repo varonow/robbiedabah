@@ -39,18 +39,8 @@
     <section class="card step" data-step="welcome" style="margin-top:-36px;position:relative">
       <p class="step-label" id="greeting">You're invited</p>
       <h2>Celebrate with us in Israel</h2>
-      <p class="lede">We begin with Shabbat in Jerusalem on Friday, April 16. Robbie becomes a Bar Mitzvah on Monday, April 19, two days before Passover, and the celebrations continue in Tel Aviv. Here's the full schedule, so you can decide how much of it you'd like to join.</p>
-      <h3 class="section-title">The Bar Mitzvah celebrations</h3>
-      <ul class="schedule" id="celebrationList"></ul>
-      <div class="passover-box">
-        <h3>Passover in Tel Aviv · April 21–29</h3>
-        <p>We're staying on at the David InterContinental for the holiday. Join us for all of it, the first half, or the second half.</p>
-      </div>
-      <ul class="schedule" id="passoverList" style="margin-top:8px"></ul>
-      <p id="moneyNote" class="hint hidden" style="font-size:17px;margin-top:18px"></p>
-      <p style="margin:22px 0 0">Please reply by <strong>Tuesday, December 15</strong>. It takes about five minutes, and once it’s sent, if anything changes, just text Danielle or Mac.</p>
-      <hr class="rule">
-      <div class="field">
+      <p class="lede">Robbie becomes a Bar Mitzvah in Jerusalem on Monday, April 19, and we’d love for you to be there. Please reply by <strong>Tuesday, December 15</strong>.</p>
+      <div class="field attend-field">
         <span class="label">Will you be joining us? <span class="req">*</span></span>
         <div class="choices" data-group="attending">
           <button type="button" class="choice" data-value="yes"><span class="dot"></span>Yes, we'll be there</button>
@@ -58,12 +48,29 @@
           <button type="button" class="choice" data-value="no"><span class="dot"></span>Sadly, we can't make it</button>
         </div>
       </div>
-      <div class="field hidden" id="declineBox">
-        <label for="decline_note">We'll miss you. Would you like to leave a mabrook for Robbie and the family?</label>
-        <textarea id="decline_note" maxlength="3000" placeholder="Optional"></textarea>
+      <div class="hidden" id="declineBox">
+        <div class="field">
+          <label for="decline_note">We'll miss you. Would you like to leave a mabrook for Robbie and the family?</label>
+          <textarea id="decline_note" maxlength="3000" placeholder="Optional"></textarea>
+        </div>
+        <div class="step-nav"><span class="spacer"></span><button type="button" class="btn" id="declineSend">Send</button></div>
+        <p class="error-msg hidden" id="declineError"></p>
       </div>
-      <div class="step-nav"><span class="spacer"></span><button type="button" class="btn" data-next id="welcomeNext">Next: your details</button></div>
-      <p class="error-msg hidden" id="declineError"></p>
+      <div id="welcomeSchedule">
+        <p class="hint hidden" id="schedHint" style="font-size:17px;margin:0 0 6px">Wonderful. Here’s the full schedule, so you can decide how much of it you’d like to join. When you’re ready, tap Next at the bottom.</p>
+        <hr class="rule">
+        <p class="lede">We begin with Shabbat in Jerusalem on Friday, April 16. Robbie becomes a Bar Mitzvah on Monday, April 19, two days before Passover, and the celebrations continue in Tel Aviv.</p>
+        <h3 class="section-title">The Bar Mitzvah celebrations</h3>
+        <ul class="schedule" id="celebrationList"></ul>
+        <div class="passover-box">
+          <h3>Passover in Tel Aviv · April 21–29</h3>
+          <p>We're staying on at the David InterContinental for the holiday. Join us for all of it, the first half, or the second half.</p>
+        </div>
+        <ul class="schedule" id="passoverList" style="margin-top:8px"></ul>
+        <p id="moneyNote" class="hint hidden" style="font-size:17px;margin-top:18px"></p>
+        <p style="margin:22px 0 0">The rest of the RSVP takes about five minutes. Once it’s sent, if anything changes, just text Danielle or Mac.</p>
+        <div class="step-nav"><span class="spacer"></span><button type="button" class="btn" data-next id="welcomeNext">Next: your details</button></div>
+      </div>
     </section>
 
     <!-- ===== Step 1 · Contact ===== -->
@@ -456,7 +463,8 @@ $('addKid').onclick = () => addPerson(true).querySelector('input').focus();
 function refreshDatesStep() {
   const coming = state.attending && state.attending !== 'no';
   $('declineBox').classList.toggle('hidden', state.attending !== 'no');
-  $('welcomeNext').textContent = state.attending === 'no' ? 'Send' : 'Next: your details';
+  $('welcomeSchedule').classList.toggle('hidden', state.attending === 'no');
+  $('schedHint').classList.toggle('hidden', !(state.attending === 'yes' || state.attending === 'maybe'));
   $('datesYes').classList.toggle('hidden', state.dates_known !== 'yes');
   $('datesNo').classList.toggle('hidden', state.dates_known !== 'no');
   $('interestField').classList.toggle('hidden', !(state.trip_plan === 'bm_only' || state.trip_plan === 'unsure'));
@@ -791,7 +799,7 @@ document.addEventListener('click', (e) => {
     if (name === 'hotels') readRooms();
     if (name === 'dates') readFlights();
     if (!validateStep(name)) return;
-    if (name === 'welcome' && state.attending === 'no') { doSubmit($('welcomeNext'), $('declineError')); return; }
+
     let n = stepIdx + 1; while (n < STEPS.length - 1 && skip(STEPS[n])) n++;
     show(n);
   }
@@ -804,6 +812,8 @@ document.addEventListener('click', (e) => {
   const jump = e.target.closest('[data-jump]');
   if (jump) show(STEPS.indexOf(jump.dataset.jump));
 });
+
+$('declineSend').onclick = () => { clearErrors(); doSubmit($('declineSend'), $('declineError')); };
 
 /* ---------- collect / fill ---------- */
 function collect() {
