@@ -59,14 +59,18 @@
       <div id="welcomeSchedule">
         <p class="hint hidden" id="schedHint" style="font-size:17px;margin:0 0 6px">Wonderful. Here’s the full schedule, so you can decide how much of it you’d like to join. When you’re ready, tap Next at the bottom.</p>
         <hr class="rule">
-        <p class="lede">We begin with Shabbat in Jerusalem on Friday, April 16. Robbie becomes a Bar Mitzvah on Monday, April 19, two days before Passover, and the celebrations continue in Tel Aviv.</p>
-        <h3 class="section-title">The Bar Mitzvah celebrations</h3>
-        <ul class="schedule" id="celebrationList"></ul>
-        <div class="passover-box">
-          <h3>Passover in Tel Aviv · April 21–29</h3>
-          <p>We're staying on at the David InterContinental for the holiday. Join us for all of it, the first half, or the second half.</p>
-        </div>
-        <ul class="schedule" id="passoverList" style="margin-top:8px"></ul>
+        <p class="lede">We begin with Shabbat in Jerusalem on Friday, April 16. Robbie becomes a Bar Mitzvah on Monday, April 19, two days before Passover, and the celebrations continue in Tel Aviv. Tap each section to see the details.</p>
+        <details class="acc">
+          <summary><span class="acc-t"><span class="acc-h">🎉 The Bar Mitzvah celebrations</span><span class="acc-sub">April 16–21, plus Party Night on April 26</span></span><span class="acc-i" aria-hidden="true"></span></summary>
+          <div class="acc-body"><ul class="schedule" id="celebrationList"></ul></div>
+        </details>
+        <details class="acc">
+          <summary><span class="acc-t"><span class="acc-h">🌊 Passover in Tel Aviv</span><span class="acc-sub">April 21–29 at the David InterContinental</span></span><span class="acc-i" aria-hidden="true"></span></summary>
+          <div class="acc-body">
+            <p class="acc-intro">We're staying on at the David InterContinental for the holiday. Join us for all of it, the first half, or the second half.</p>
+            <ul class="schedule" id="passoverList"></ul>
+          </div>
+        </details>
         <p id="moneyNote" class="hint hidden" style="font-size:17px;margin-top:18px"></p>
         <p style="margin:22px 0 0">The rest of the RSVP takes about five minutes. Once it’s sent, if anything changes, just text Danielle or Mac.</p>
         <div class="step-nav"><span class="spacer"></span><button type="button" class="btn" data-next id="welcomeNext">Next: your details</button></div>
