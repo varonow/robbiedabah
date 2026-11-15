@@ -37,6 +37,11 @@
   .small-btn.danger { color: var(--danger); border-color: var(--danger); }
   .inv-form { display: grid; grid-template-columns: 2fr 1.2fr 1.2fr; gap: 12px; align-items: end; }
   .inv-form .full { grid-column: 1 / -1; }
+  .inv-form label .muted { text-transform: none; letter-spacing: 0; font-weight: 400; }
+  .form-hint { font-size: 15px; margin: 6px 0 0; }
+  .preview { background: var(--olive-pale); border-radius: 8px; padding: 12px 14px; font-size: 16px; }
+  .preview p { margin: 2px 0; } .preview .warn { color: var(--danger); font-weight: 600; }
+  .form-error { color: var(--danger); font-family: var(--label); font-weight: 700; }
   .checks { display: flex; flex-wrap: wrap; gap: 10px 22px; }
   .checks label { display: flex; align-items: center; gap: 8px; text-transform: none; letter-spacing: 0; font-family: var(--body); font-weight: 400; font-size: 17px; }
   .checks input { width: 22px; height: 22px; }
@@ -83,8 +88,9 @@
         <h2 id="invFormTitle"><span class="ico">➕</span> Add a family</h2>
         <input type="hidden" id="inv_id">
         <div class="inv-form">
-          <div><label for="inv_label">Family name</label><input type="text" id="inv_label" maxlength="120"></div>
-          <div class="full"><label for="inv_party">Who this invite is for (shown to the guest)</label><input type="text" id="inv_party" maxlength="600" placeholder="e.g. Isaac, Ivette, Morris"></div>
+          <div class="full"><label for="inv_label">Family name <span class="muted">(guests see this and can't change it)</span></label><input type="text" id="inv_label" maxlength="120" placeholder="e.g. Susan & Andoni Economou"></div>
+          <div class="full"><label for="inv_party">Everyone on this invite <span class="muted">(first names, parents included)</span></label><input type="text" id="inv_party" maxlength="600" placeholder="e.g. Susan, Andoni, Grace, Jared, Elias">
+            <p class="muted form-hint">Separate names with commas. Add “family” at the end for unmarried kids at home, e.g. “Evelyn, Joey, family.” Married kids with their own families get their own invite.</p></div>
           <div class="full"><label for="inv_type">Invite type</label>
             <select id="inv_type"><option value="full">Full trip (family RSVP: party, dates, hotels, events)</option><option value="events">Specific events only (e.g. a rabbi or friends for a Seder)</option></select></div>
           <div class="full hidden" id="inv_events_wrap">
@@ -105,6 +111,8 @@
             </div>
           </div>
           <div class="full"><label for="inv_note">Internal note</label><input type="text" id="inv_note" maxlength="1000"></div>
+          <div class="full preview hidden" id="invPreview"></div>
+          <div class="full form-error hidden" id="invError"></div>
           <div class="full"><button type="button" class="btn" id="invSave">Save &amp; create link</button>
             <button type="button" class="btn secondary hidden" id="invCancel">Cancel edit</button></div>
         </div>
@@ -167,7 +175,7 @@ function renderAll() {
   $('inv_events').innerHTML = DATA.events.map(e => `<label><input type="checkbox" class="inv-ev" value="${e.id}"> ${e.emoji} ${fmt(e.event_date)} · ${esc(e.title)}</label>`).join('');
   renderOverview(); renderEvents(); renderInvites(); renderFlights(); renderResponses();
 }
-$('inv_type').onchange = () => $('inv_events_wrap').classList.toggle('hidden', $('inv_type').value !== 'events');
+$('inv_type').onchange = () => { $('inv_events_wrap').classList.toggle('hidden', $('inv_type').value !== 'events'); if (DATA) invPreview(); };
 function evNames(ids) { return DATA.events.filter(e => ids.includes(e.id)).map(e => e.title); }
 function greetName(label) {
   // "Joyce & Mousa Saad" -> "Joyce & Mousa"; "Stephanie Aronow" -> "Stephanie"; "Rabbi Medina" stays
@@ -279,7 +287,47 @@ function renderInvites() {
     }).join('') + '</tbody>';
 }
 $('invSearch').oninput = renderInvites; $('invFilter').onchange = renderInvites;
-$('inv_status').onchange = () => $('inv_partial').classList.toggle('hidden', $('inv_status').value !== 'partial');
+$('inv_status').onchange = () => {
+  const st = $('inv_status').value;
+  $('inv_partial').classList.toggle('hidden', st !== 'partial');
+  if (st === 'paying') $('inv_covered').value = 'Themselves';
+  if (st !== 'paying' && $('inv_covered').value === 'Themselves') $('inv_covered').value = '';
+  invPreview();
+};
+/* ---------- add-a-family checks: preview what the guest sees and catch common slips ---------- */
+function partyList() { return $('inv_party').value.split(',').map(x => x.trim()).filter(Boolean); }
+function missingFromParty() {
+  if ($('inv_type').value === 'events') return [];
+  const party = partyList().map(x => x.toLowerCase()); if (!party.length) return [];
+  const gn = greetName($('inv_label').value); if (/^rabbi\b/i.test(gn)) return [];
+  return gn.split(/\s*&\s*|,\s*/).map(x => x.trim()).filter(x => x && x.split(/\s+/).length === 1 && !party.includes(x.toLowerCase()));
+}
+function invPreview() {
+  const label = $('inv_label').value.trim(), box = $('invPreview');
+  $('invError').classList.add('hidden');
+  if (!label) { box.classList.add('hidden'); return; }
+  const gn = greetName(label), pl = partyList(), ev = $('inv_type').value === 'events';
+  const forLine = ev ? '' : pl.length ? `This invitation is for ${joinList(pl).replace(/ and ([^,]+)$/, ' & $1')}.` : 'No names yet, so it will ask them to list only their own household.';
+  const miss = missingFromParty();
+  const dupe = DATA && DATA.invites.find(i => i.id !== $('inv_id').value && i.label.trim().toLowerCase() === label.toLowerCase());
+  box.innerHTML = `<p><strong>Their text will start:</strong> Hi ${esc(gn)}${ev ? ',' : '!'} …</p>${forLine ? `<p><strong>Their RSVP will say:</strong> ${esc(forLine)}</p>` : ''}
+    ${miss.length ? `<p class="warn">${esc(joinList(miss))} ${miss.length > 1 ? 'aren’t' : 'isn’t'} in “Everyone on this invite.” Add them so they’re counted.</p>` : ''}
+    ${dupe ? `<p class="warn">There’s already an invite named ${esc(dupe.label)}.</p>` : ''}`;
+  box.classList.remove('hidden');
+}
+['inv_label', 'inv_party'].forEach(id => $(id).addEventListener('input', invPreview));
+$('inv_status').onchange();
+$('inv_covered').addEventListener('change', () => $('invError').classList.add('hidden'));
+function invProblem() {
+  const st = $('inv_status').value, cov = $('inv_covered').value;
+  if (!$('inv_label').value.trim()) return ['inv_label', 'Please enter the family name.'];
+  if (!cov) return ['inv_covered', 'Please choose who it’s covered by.'];
+  if (st !== 'paying' && cov === 'Themselves') return ['inv_covered', 'A comped invite needs someone other than “Themselves” in Covered by.'];
+  if (st === 'partial' && !['c_rooms', 'c_transfers', 'c_meals', 'c_activities'].some(k => $(k).checked)) return ['inv_partial', 'Tick at least one comped item, or set the status to Paying.'];
+  const miss = missingFromParty();
+  if (miss.length) return ['inv_party', `${joinList(miss)} ${miss.length > 1 ? 'aren’t' : 'isn’t'} in “Everyone on this invite.”`];
+  return null;
+}
 $('invTable').addEventListener('click', async (e) => {
   const t = e.target;
   if (t.dataset.copy) { await copy(link(t.dataset.copy)); toast('Link copied'); }
@@ -327,7 +375,18 @@ function resetForm() {
 }
 $('invCancel').onclick = resetForm;
 $('invSave').onclick = async () => {
-  if (!$('inv_label').value.trim()) { $('inv_label').classList.add('invalid'); return; }
+  document.querySelectorAll('.inv-form .invalid').forEach(x => x.classList.remove('invalid'));
+  const prob = invProblem();
+  if (prob) {
+    const [id, msg] = prob;
+    // A missing parent is usually a slip, but it can be intentional, so let them confirm it
+    if (!(id === 'inv_party' && confirm(msg + ' Save anyway?'))) {
+      $(id).classList.add('invalid'); $('invError').textContent = msg; $('invError').classList.remove('hidden');
+      return;
+    }
+  }
+  const dupe = DATA.invites.find(i => i.id !== $('inv_id').value && i.label.trim().toLowerCase() === $('inv_label').value.trim().toLowerCase());
+  if (dupe && !confirm(`There's already an invite named ${dupe.label}. Save another one anyway?`)) return;
   const evIds = [...document.querySelectorAll('.inv-ev:checked')].map(c => c.value);
   if ($('inv_type').value === 'events' && !evIds.length) { toast('Pick at least one event'); return; }
   const saved = await rpc('admin_save_invite', { passcode: PASS, inv: {
