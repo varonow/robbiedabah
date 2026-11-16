@@ -468,13 +468,15 @@ function legsHtml(h) {
 function renderResponses() {
   const resp = DATA.invites.filter(i => i.household).sort((a, b) => (b.household.updated_at || '').localeCompare(a.household.updated_at || ''));
   const ev = Object.fromEntries(DATA.events.map(e => [e.id, e]));
+  // show each family's events in schedule order (date, then the order on the day)
+  const inOrder = (rows) => rows.filter(r => ev[r.event_id]).sort((a, b) => ev[a.event_id].event_date.localeCompare(ev[b.event_id].event_date) || (ev[a.event_id].sort - ev[b.event_id].sort));
   const plan = { bm_only: 'Bar Mitzvah only', passover_full: 'BM + all of Passover', passover_first: 'BM + first half of Passover', passover_second: 'BM + second half of Passover', unsure: 'Not sure yet' };
   $$panel('responses').innerHTML = resp.length ? resp.map(i => {
     const h = i.household, rr = h.room_requests || {};
     if (i.invite_type === 'events') return `<div class="hh"><h3>${esc(i.label)} <span class="muted">· event-only</span></h3>
       <p class="muted">${statusText(i)}${i.covered_by ? ' · covered by ' + esc(i.covered_by) : ''} · updated ${new Date(h.updated_at).toLocaleString()}</p>
       <p>${esc(h.contact_name)}${h.phone ? ' · ' + esc(h.phone) : ''}${h.email ? ' · ' + esc(h.email) : ''}</p>
-      <ul>${h.events.map(r => ev[r.event_id] ? `<li>${ev[r.event_id].emoji} ${esc(ev[r.event_id].title)}: ${r.choice === 'none' ? 'not coming' : `${r.adults} adults, ${r.kids} kids`}</li>` : '').join('')}</ul>
+      <ul>${inOrder(h.events).map(r => ev[r.event_id] ? `<li>${ev[r.event_id].emoji} ${esc(ev[r.event_id].title)}: ${r.choice === 'none' ? 'not coming' : `${r.adults} adults, ${r.kids} kids`}</li>` : '').join('')}</ul>
       ${h.notes ? `<h4>Notes</h4><p>${esc(h.notes)}</p>` : ''}</div>`;
     return `<div class="hh"><h3>${esc(i.label)}</h3>
       <p class="muted">${statusText(i)}${i.covered_by ? ' · covered by ' + esc(i.covered_by) : ''} · updated ${new Date(h.updated_at).toLocaleString()}</p>
@@ -490,7 +492,7 @@ function renderResponses() {
         <div><h4>InterContinental</h4>${h.hotel_telaviv || '—'}${(rr.telaviv || []).length ? '<ul>' + rr.telaviv.map(r => `<li>${esc(r.type || 'type?')}${r.who ? ' · ' + esc(r.who) : ''}</li>`).join('') + '</ul>' : ''}</div>
         <div><h4>Rooms</h4>Adjoining: ${h.rooms_adjoining || '—'}${h.room_notes ? '<br>' + esc(h.room_notes) : ''}</div>
       </div>
-      <h4>Events</h4><ul>${h.events.filter(r => r.choice !== 'none').map(r => ev[r.event_id] ? `<li>${ev[r.event_id].emoji} ${fmt(ev[r.event_id].event_date)} ${esc(ev[r.event_id].title)}: ${r.adults} adults, ${r.kids} kids</li>` : '').join('') || '<li>None</li>'}</ul>
+      <h4>Events</h4><ul>${inOrder(h.events).filter(r => r.choice !== 'none').map(r => ev[r.event_id] ? `<li>${ev[r.event_id].emoji} ${fmt(ev[r.event_id].event_date)} ${esc(ev[r.event_id].title)}: ${r.adults} adults, ${r.kids} kids</li>` : '').join('') || '<li>None</li>'}</ul>
       ${h.notes ? `<h4>Notes</h4><p>${esc(h.notes)}</p>` : ''}</div>`;
   }).join('') : '<section class="card"><p>No responses yet.</p></section>';
 }
