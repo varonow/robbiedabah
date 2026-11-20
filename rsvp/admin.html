@@ -80,6 +80,10 @@
   .acc-i::before { content: ''; position: absolute; left: 10px; top: 8px; width: 8px; height: 8px; border-right: 2.5px solid var(--olive); border-bottom: 2.5px solid var(--olive); transform: rotate(45deg); }
   .rs-row[open] .acc-i::before { transform: rotate(-135deg); top: 12px; }
   @media (max-width: 760px) { .rs-bar { position: static; } .rs-row summary { grid-template-columns: 1fr auto; } .rs-sum { grid-column: 1 / -1; } .acc-i { display: none; } }
+  .invite-card { display: grid; grid-template-columns: 150px 1fr; gap: 22px; align-items: start; }
+  .inv-thumb { width: 150px; height: auto; box-shadow: var(--shadow); border-radius: 4px; }
+  .invite-card a.small-btn { display: inline-block; text-decoration: none; }
+  @media (max-width: 760px) { .invite-card { grid-template-columns: 1fr; } .inv-thumb { width: 160px; } }
   .toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: var(--ink); color: #fff; padding: 12px 20px; border-radius: 8px; font-family: var(--label); display: none; z-index: 10; }
 </style>
 </head>
@@ -111,6 +115,19 @@
     <div data-panel="events" class="hidden"></div>
     <div data-panel="flights" class="hidden"></div>
     <div data-panel="invites" class="hidden">
+      <section class="card invite-card">
+        <img src="../invite/robbie-invitation.png" alt="Robbie's invitation" class="inv-thumb">
+        <div>
+          <h2><span class="ico">💌</span> Invitation to share by text</h2>
+          <p>For people who won't be filling out the form, like great-grandparents. It's a pretty invitation with no RSVP. Paste the text message into a text, and the invitation shows up as a picture. Or copy the image and paste it in instead.</p>
+          <p class="muted" id="inviteMsgPreview"></p>
+          <button class="small-btn" id="invCopyMsg">Copy text message</button>
+          <button class="small-btn" id="invCopyImg">Copy image</button>
+          <button class="small-btn" id="invCopyLink">Copy link</button>
+          <a class="small-btn" href="../invite/" target="_blank" rel="noopener">Open invitation</a>
+          <a class="small-btn" href="../invite/robbie-invitation.png" download="Robbie-Bar-Mitzvah-Invitation.png">Save image</a>
+        </div>
+      </section>
       <section class="card">
         <h2 id="invFormTitle"><span class="ico">➕</span> Add a family</h2>
         <input type="hidden" id="inv_id">
@@ -321,6 +338,19 @@ $('inv_status').onchange = () => {
   if (st !== 'paying' && $('inv_covered').value === 'Themselves') $('inv_covered').value = '';
   invPreview();
 };
+/* ---------- shareable invitation (no RSVP) ---------- */
+const INVITE_URL = new URL('../invite/', location.href).href;
+const INVITE_MSG = `Hi! We wanted to share Robbie’s Bar Mitzvah invitation with you.\n${INVITE_URL}`;
+$('inviteMsgPreview').textContent = '“' + INVITE_MSG.replace('\n', ' ') + '”';
+$('invCopyMsg').onclick = async () => { await copy(INVITE_MSG); toast('Invitation message copied'); };
+$('invCopyLink').onclick = async () => { await copy(INVITE_URL); toast('Link copied'); };
+$('invCopyImg').onclick = async () => {
+  try {
+    await navigator.clipboard.write([new ClipboardItem({ 'image/png': fetch('../invite/robbie-invitation.png').then(r => r.blob()) })]);
+    toast('Image copied');
+  } catch (e) { window.open('../invite/robbie-invitation.png', '_blank'); toast('Press and hold the image to copy or save it'); }
+};
+
 /* ---------- add-a-family checks: preview what the guest sees and catch common slips ---------- */
 function partyList() { return $('inv_party').value.split(',').map(x => x.trim()).filter(Boolean); }
 function missingFromParty() {
