@@ -98,6 +98,12 @@
   table.hc thead tr:first-child th { top: 0; } table.hc thead tr:nth-child(2) th { top: 36px; }
   table.hc .mb { color: var(--gold-text); background: rgba(163,126,75,.06); }
   table.hc .poss { background: var(--olive-pale); }
+  table.pr input { min-height: 0; padding: 6px 8px; font-size: 16px; }
+  table.pr input[type=number] { width: 100px; text-align: right; }
+  table.pr input.pr-note { width: 100%; min-width: 200px; }
+  table.pr td:first-child { white-space: nowrap; }
+  .pr-h { font-family: var(--display); font-weight: 400; font-size: 24px; color: var(--olive); margin: 22px 0 10px; }
+  .pr-lines summary { cursor: pointer; font-size: 14px; } .pr-lines ul { margin: 4px 0 0; padding-left: 18px; font-size: 15px; }
   .toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: var(--ink); color: #fff; padding: 12px 20px; border-radius: 8px; font-family: var(--label); display: none; z-index: 10; }
 </style>
 </head>
@@ -120,6 +126,7 @@
     <div class="tabs" role="tablist">
       <button class="tab" data-tab="overview" aria-selected="true">Overview</button>
       <button class="tab" data-tab="events">Headcounts</button>
+      <button class="tab" data-tab="pricing">Pricing</button>
       <button class="tab" data-tab="invites">Invites &amp; links</button>
       <button class="tab" data-tab="flights">Arrivals</button>
       <button class="tab" data-tab="responses">Responses</button>
@@ -127,6 +134,7 @@
 
     <div data-panel="overview"></div>
     <div data-panel="events" class="hidden"></div>
+    <div data-panel="pricing" class="hidden"></div>
     <div data-panel="flights" class="hidden"></div>
     <div data-panel="invites" class="hidden">
       <section class="card invite-card">
@@ -241,7 +249,7 @@ function changeItem(c, withName) {
 }
 function renderAll() {
   $('inv_events').innerHTML = DATA.events.map(e => `<label><input type="checkbox" class="inv-ev" value="${e.id}"> ${e.emoji} ${fmt(e.event_date)} · ${esc(e.title)}</label>`).join('');
-  renderOverview(); renderEvents(); renderInvites(); renderFlights(); renderResponses();
+  renderOverview(); renderEvents(); renderPricing(); renderInvites(); renderFlights(); renderResponses();
 }
 $('inv_type').onchange = () => { $('inv_events_wrap').classList.toggle('hidden', $('inv_type').value !== 'events'); if (DATA) invPreview(); };
 function evNames(ids) { return DATA.events.filter(e => ids.includes(e.id)).map(e => e.title); }
@@ -368,6 +376,93 @@ function renderEvents() {
   });
   $$panel('events').innerHTML = html + '</tbody></table></div>';
   $('hcCost').onchange = (ev) => { SHOW_COST = ev.target.checked; renderEvents(); };
+}
+
+/* ---------- pricing: per-person prices and who owes what ---------- */
+const PR = { basis: 'yes' };
+const HOSTS = 'Danielle & Mac (hosts)';
+const money = (n) => '$' + (Math.round(n * 100) / 100).toLocaleString('en-US', { minimumFractionDigits: n % 1 ? 2 : 0, maximumFractionDigits: 2 });
+const CAT_NAME = { meals: 'Passover meals', activities: 'Passover activities' };
+function charges() {
+  // One line per family per event: people, cost, and who pays it
+  const out = [];
+  DATA.invites.forEach(i => {
+    const h = i.household; if (!h || h.attending === 'no' || (PR.basis === 'yes' && h.attending !== 'yes')) return;
+    h.events.forEach(r => {
+      const e = DATA.events.find(x => x.id === r.event_id); if (!e || r.choice === 'none' || (r.adults + r.kids) === 0) return;
+      const priced = e.price_adult != null || e.price_child != null;
+      const cost = r.adults * Number(e.price_adult || 0) + r.kids * Number(e.price_child || 0);
+      const payer = e.cost_type === 'hosted' ? HOSTS : (i.comp[e.comp_category] ? (i.covered_by || 'Unassigned') : 'family');
+      out.push({ i, e, a: r.adults, k: r.kids, cost, priced, payer, maybe: h.attending === 'maybe' });
+    });
+  });
+  return out;
+}
+function renderPricing() {
+  const ch = charges();
+  const evs = DATA.events;
+  const unpriced = evs.filter(e => e.price_adult == null && e.price_child == null);
+  // Totals by who pays
+  const byPayer = {};
+  ch.forEach(c => { const k = c.payer === 'family' ? 'Families paying for themselves' : c.payer; byPayer[k] = (byPayer[k] || 0) + c.cost; });
+  const grand = ch.reduce((s, c) => s + c.cost, 0);
+  // Family bills
+  const fam = new Map();
+  ch.forEach(c => { const f = fam.get(c.i.id) || { i: c.i, owe: 0, covered: {}, lines: [] }; if (c.payer === 'family') f.owe += c.cost; else if (c.payer !== HOSTS) f.covered[c.payer] = (f.covered[c.payer] || 0) + c.cost; f.lines.push(c); fam.set(c.i.id, f); });
+  const fams = [...fam.values()].filter(f => f.owe > 0 || Object.keys(f.covered).length).sort((a, b) => b.owe - a.owe || a.i.label.localeCompare(b.i.label));
+  const priceRow = (e) => `<tr><td class="muted">${fmt(e.event_date)}</td><td>${e.emoji} ${esc(e.title)}</td>
+      <td class="muted">${e.cost_type === 'hosted' ? 'Hosts' : 'Family, unless comped (' + (CAT_NAME[e.comp_category] || e.comp_category) + ')'}</td>
+      <td><input type="number" class="pr-in" data-pid="${e.id}" data-f="price_adult" min="0" step="0.01" inputmode="decimal" value="${e.price_adult ?? ''}" placeholder="—"></td>
+      <td><input type="number" class="pr-in" data-pid="${e.id}" data-f="price_child" min="0" step="0.01" inputmode="decimal" value="${e.price_child ?? ''}" placeholder="—"></td>
+      <td><input type="text" class="pr-note" data-pid="${e.id}" data-f="price_note" maxlength="300" value="${esc(e.price_note || '')}" placeholder="Optional note"></td></tr>`;
+  $$panel('pricing').innerHTML = `
+    <section class="card"><h2><span class="ico">🏷️</span> Prices per person</h2>
+      <p class="muted">Enter the cost per adult and per child, in dollars. Leave it blank until you have a number. Guests never see these prices. Hosted events are paid by Danielle &amp; Mac. Everything else is paid by the family, or by whoever covers them when it's comped.</p>
+      <div class="tablewrap"><table class="pr"><thead><tr><th>Date</th><th>Event</th><th>Who pays</th><th class="num">Adult</th><th class="num">Child</th><th>Note</th></tr></thead>
+        <tbody>${evs.map(priceRow).join('')}</tbody></table></div>
+      <p><button class="btn" id="prSave">Save prices</button> <span class="muted" id="prStatus"></span></p></section>
+
+    <section class="card"><h2><span class="ico">💵</span> Who owes what</h2>
+      <div class="segs" style="margin-bottom:12px"><button class="seg${PR.basis === 'yes' ? ' on' : ''}" data-prb="yes">✅ Yes only</button><button class="seg${PR.basis === 'all' ? ' on' : ''}" data-prb="all">✅ Yes + 🤔 Maybe</button></div>
+      ${unpriced.length ? `<p class="muted">⚠️ ${unpriced.length} of ${evs.length} events don't have a price yet, so they count as $0.</p>` : ''}
+      <div class="tiles">${Object.entries(byPayer).sort((a, b) => b[1] - a[1]).map(([k, v]) => `<div class="tile"><div class="n">${money(v)}</div><div class="l">${esc(k)}</div></div>`).join('')}
+        <div class="tile"><div class="n">${money(grand)}</div><div class="l">Total, everything</div></div></div>
+
+      <h3 class="pr-h">Each family</h3>
+      ${fams.length ? `<div class="tablewrap"><table><thead><tr><th>Family</th><th>Comp status</th><th class="num">They owe</th><th>Covered for them</th></tr></thead><tbody>
+        ${fams.map(f => `<tr class="pr-fam" data-fid="${f.i.id}"><td><strong>${esc(f.i.label)}</strong>${f.lines.some(l => l.maybe) ? ' <span class="muted">· maybe</span>' : ''}<details class="pr-lines"><summary class="muted">Items</summary><ul>${f.lines.map(l => `<li>${esc(l.e.title)}: ${l.a}A${l.k ? ' + ' + l.k + 'K' : ''} = ${l.priced ? money(l.cost) : '<span class="muted">no price yet</span>'} <span class="muted">· ${l.payer === 'family' ? 'they pay' : esc(l.payer)}</span></li>`).join('')}</ul></details></td>
+          <td>${statusText(f.i)}</td><td class="num"><strong>${money(f.owe)}</strong></td>
+          <td class="muted">${Object.entries(f.covered).map(([k, v]) => `${esc(k)} ${money(v)}`).join(' · ') || '—'}</td></tr>`).join('')}</tbody></table></div>` : '<p class="muted">No paid items yet.</p>'}
+
+      <h3 class="pr-h">Each event</h3>
+      <div class="tablewrap"><table><thead><tr><th>Event</th><th class="num">Adults</th><th class="num">Children</th><th class="num">Cost</th><th class="num">Families pay</th><th>Covered by</th></tr></thead><tbody>
+        ${evs.map(e => { const cs = ch.filter(c => c.e.id === e.id); const A = cs.reduce((s, c) => s + c.a, 0), K = cs.reduce((s, c) => s + c.k, 0);
+          const tot = cs.reduce((s, c) => s + c.cost, 0), famPay = cs.filter(c => c.payer === 'family').reduce((s, c) => s + c.cost, 0);
+          const cov = {}; cs.filter(c => c.payer !== 'family').forEach(c => cov[c.payer] = (cov[c.payer] || 0) + c.cost);
+          const priced = e.price_adult != null || e.price_child != null;
+          return `<tr><td>${e.emoji} ${esc(e.title)} <span class="muted">· ${fmt(e.event_date)}</span></td><td class="num">${A}</td><td class="num">${K}</td>
+            <td class="num">${priced ? '<strong>' + money(tot) + '</strong>' : '<span class="muted">no price</span>'}</td><td class="num">${priced ? money(famPay) : ''}</td>
+            <td class="muted">${priced ? Object.entries(cov).map(([k, v]) => `${esc(k)} ${money(v)}`).join(' · ') : ''}</td></tr>`; }).join('')}
+      </tbody></table></div>
+      <p><button class="btn secondary" id="prExport">Bills spreadsheet</button></p>
+      <p class="muted">Hotel rooms and airport transfers aren't priced here yet. They're priced per room and per trip rather than per person, so they can be added separately.</p>
+    </section>`;
+  const pan = $$panel('pricing');
+  pan.querySelectorAll('[data-prb]').forEach(b => b.onclick = () => { PR.basis = b.dataset.prb; renderPricing(); });
+  $('prSave').onclick = async () => {
+    const rows = evs.map(e => { const o = { id: e.id }; pan.querySelectorAll(`[data-pid="${e.id}"]`).forEach(inp => o[inp.dataset.f] = inp.value.trim()); return o; });
+    const bad = rows.find(r => [r.price_adult, r.price_child].some(v => v !== '' && !(Number(v) >= 0)));
+    if (bad) { $('prStatus').textContent = 'Prices need to be numbers.'; return; }
+    $('prSave').disabled = true; $('prStatus').textContent = 'Saving…';
+    try { await rpc('admin_save_prices', { passcode: PASS, prices: rows }); await load(); toast('Prices saved'); }
+    catch (e) { $('prStatus').textContent = 'Didn’t save: ' + e.message; }
+    finally { const b = $('prSave'); if (b) b.disabled = false; }
+  };
+  $('prExport').onclick = () => {
+    const rows = [['Family', 'Attending', 'Event', 'Date', 'Adults', 'Children', 'Adult price', 'Child price', 'Cost', 'Who pays']];
+    ch.forEach(c => rows.push([c.i.label, c.i.household.attending, c.e.title, c.e.event_date, c.a, c.k, c.e.price_adult ?? '', c.e.price_child ?? '', c.priced ? c.cost.toFixed(2) : '', c.payer === 'family' ? 'Family' : c.payer]));
+    download(PR.basis === 'yes' ? 'robbie-bills-yes.csv' : 'robbie-bills-yes-and-maybe.csv', csv(rows));
+  };
 }
 
 function renderInvites() {
