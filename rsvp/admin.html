@@ -53,6 +53,33 @@
   .hh ul { margin: 0; padding-left: 20px; }
   .filters { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 14px; }
   .filters input, .filters select { max-width: 280px; }
+  .tile.go { text-align: left; border: 0; cursor: pointer; font: inherit; }
+  .tile.go:hover { outline: 2px solid var(--olive); }
+  .rs-bar { background: var(--paper); border-radius: var(--radius); box-shadow: var(--shadow); padding: 16px; margin-bottom: 14px; position: sticky; top: 0; z-index: 2; }
+  .rs-bar input[type=search] { width: 100%; max-width: none; margin-bottom: 12px; }
+  .segs { display: flex; flex-wrap: wrap; gap: 8px; }
+  .seg { font-family: var(--label); font-weight: 700; font-size: 15px; background: #fff; color: var(--olive); border: 2px solid var(--line); border-radius: 8px; padding: 9px 14px; cursor: pointer; }
+  .seg.on { background: var(--olive); border-color: var(--olive); color: #fff; }
+  .seg .cnt { font-weight: 600; opacity: .75; margin-left: 2px; }
+  .rs-tools { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-top: 12px; }
+  .rs-tools .spacer { flex: 1; }
+  .rs-tools select { width: 210px; padding: 6px 10px; font-size: 15px; min-height: 0; }
+  .rs-row { background: var(--paper); border-radius: var(--radius); box-shadow: var(--shadow); margin-bottom: 8px; }
+  .rs-row summary { list-style: none; display: grid; grid-template-columns: minmax(200px, 1.3fr) 150px 2fr 34px; gap: 12px; align-items: center; padding: 14px 18px; cursor: pointer; }
+  .rs-row summary::-webkit-details-marker { display: none; }
+  .rs-row[open] { outline: 2px solid var(--olive); }
+  .rs-name { font-family: var(--display); font-size: 21px; line-height: 1.2; }
+  .rs-st { font-family: var(--label); font-weight: 700; font-size: 14px; white-space: nowrap; }
+  .st-yes { color: var(--ok); } .st-maybe { color: var(--gold-text); } .st-no { color: var(--danger); } .st-waiting { color: var(--ink-soft); }
+  .hh-body { padding: 4px 18px 18px; border-top: 1px solid var(--line); }
+  .hh-body > h3 { display: none; }
+  .hh-body .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 6px 24px; margin-top: 10px; }
+  .hh-body h4 { font-family: var(--label); text-transform: uppercase; letter-spacing: .05em; font-size: 13px; margin: 12px 0 4px; color: var(--gold-text); }
+  .hh-body ul { margin: 0; padding-left: 20px; }
+  .acc-i { width: 30px; height: 30px; border-radius: 50%; background: var(--olive-pale); position: relative; justify-self: end; }
+  .acc-i::before { content: ''; position: absolute; left: 10px; top: 8px; width: 8px; height: 8px; border-right: 2.5px solid var(--olive); border-bottom: 2.5px solid var(--olive); transform: rotate(45deg); }
+  .rs-row[open] .acc-i::before { transform: rotate(-135deg); top: 12px; }
+  @media (max-width: 760px) { .rs-bar { position: static; } .rs-row summary { grid-template-columns: 1fr auto; } .rs-sum { grid-column: 1 / -1; } .acc-i { display: none; } }
   .toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: var(--ink); color: #fff; padding: 12px 20px; border-radius: 8px; font-family: var(--label); display: none; z-index: 10; }
 </style>
 </head>
@@ -202,10 +229,10 @@ function renderOverview() {
       <div class="tile"><div class="n">${inv.length}</div><div class="l">Invites</div></div>
       <div class="tile"><div class="n">${all.filter(i => i.sent_at).length} / ${all.length}</div><div class="l">Links sent</div></div>
       <div class="tile"><div class="n">${resp.length}</div><div class="l">Responded</div></div>
-      <div class="tile"><div class="n">${inv.length - resp.length}</div><div class="l">Waiting on</div></div>
-      <div class="tile"><div class="n">${cnt(i => i.household.attending === 'yes')}</div><div class="l">Families coming</div></div>
-      <div class="tile"><div class="n">${cnt(i => i.household.attending === 'maybe')}</div><div class="l">Maybe</div></div>
-      <div class="tile"><div class="n">${resp.length - coming.length}</div><div class="l">Can't come</div></div>
+      <button class="tile go" onclick="showResponses('waiting')"><div class="n">${inv.length - resp.length}</div><div class="l">Waiting on ›</div></button>
+      <button class="tile go" onclick="showResponses('yes')"><div class="n">${cnt(i => i.household.attending === 'yes')}</div><div class="l">Families coming ›</div></button>
+      <button class="tile go" onclick="showResponses('maybe')"><div class="n">${cnt(i => i.household.attending === 'maybe')}</div><div class="l">Maybe ›</div></button>
+      <button class="tile go" onclick="showResponses('no')"><div class="n">${resp.length - coming.length}</div><div class="l">Can't come ›</div></button>
       <div class="tile"><div class="n">${a + k}</div><div class="l">People (${a} adults, ${k} kids)</div></div>
       <div class="tile"><div class="n">${roomsJ}</div><div class="l">King David rooms asked for</div></div>
       <div class="tile"><div class="n">${roomsT}</div><div class="l">InterContinental rooms asked for</div></div>
@@ -243,23 +270,23 @@ function dupesHtml() {
 function $$panel(n) { return document.querySelector(`[data-panel="${n}"]`); }
 
 function renderEvents() {
-  let html = `<p class="muted">Counts come from each family's answers. "Paying" and "Comped" split the shared Passover items by each invite's comp status. Hosted events have no split.</p>
-    <div class="tablewrap"><table><thead><tr><th>Event</th><th class="num">Families</th><th class="num">Adults</th><th class="num">Kids</th><th class="num">Total</th><th class="num">Paying (A/K)</th><th class="num">Comped (A/K)</th><th>Comped by</th></tr></thead><tbody>`;
+  let html = `<p class="muted">Counts come from each family's answers and include families who said Yes and Maybe. "Yes only" is the firm number. "Paying" and "Comped" split the shared Passover items by each invite's comp status. Hosted events have no split.</p>
+    <div class="tablewrap"><table><thead><tr><th>Event</th><th class="num">Families</th><th class="num">Adults</th><th class="num">Kids</th><th class="num">Total</th><th class="num">Yes only</th><th class="num">Maybe</th><th class="num">Paying (A/K)</th><th class="num">Comped (A/K)</th><th>Comped by</th></tr></thead><tbody>`;
   let last = '';
   DATA.events.forEach(e => {
-    if (e.event_date !== last) { html += `<tr class="daysep"><td colspan="8">${fmt(e.event_date)}</td></tr>`; last = e.event_date; }
-    let f = 0, A = 0, K = 0, pa = 0, pk = 0, ca = 0, ck = 0; const by = {};
+    if (e.event_date !== last) { html += `<tr class="daysep"><td colspan="10">${fmt(e.event_date)}</td></tr>`; last = e.event_date; }
+    let f = 0, A = 0, K = 0, Y = 0, pa = 0, pk = 0, ca = 0, ck = 0; const by = {};
     DATA.invites.forEach(i => {
       const h = i.household; if (!h || h.attending === 'no') return;
       const r = h.events.find(x => x.event_id === e.id); if (!r || r.choice === 'none') return;
-      f++; A += r.adults; K += r.kids;
+      f++; A += r.adults; K += r.kids; if (h.attending === 'yes') Y += r.adults + r.kids;
       if (e.cost_type !== 'hosted') {
         if (i.comp[e.comp_category]) { ca += r.adults; ck += r.kids; const b = i.covered_by || 'Unassigned'; by[b] = (by[b] || 0) + r.adults + r.kids; }
         else { pa += r.adults; pk += r.kids; }
       }
     });
     const hosted = e.cost_type === 'hosted';
-    html += `<tr><td>${e.emoji} ${esc(e.title)}${hosted ? ' <span class="muted">· hosted</span>' : ''}</td><td class="num">${f}</td><td class="num">${A}</td><td class="num">${K}</td><td class="num"><strong>${A + K}</strong></td>
+    html += `<tr><td>${e.emoji} ${esc(e.title)}${hosted ? ' <span class="muted">· hosted</span>' : ''}</td><td class="num">${f}</td><td class="num">${A}</td><td class="num">${K}</td><td class="num">${A + K}</td><td class="num"><strong>${Y}</strong></td><td class="num">${A + K - Y}</td>
       <td class="num">${hosted ? '' : pa + ' / ' + pk}</td><td class="num">${hosted ? '' : ca + ' / ' + ck}</td>
       <td class="muted">${hosted ? '' : Object.entries(by).map(([b, n]) => `${esc(b)} ${n}`).join(' · ')}</td></tr>`;
   });
@@ -328,8 +355,9 @@ function invProblem() {
   if (miss.length) return ['inv_party', `${joinList(miss)} ${miss.length > 1 ? 'aren’t' : 'isn’t'} in “Everyone on this invite.”`];
   return null;
 }
-$('invTable').addEventListener('click', async (e) => {
+document.addEventListener('click', async (e) => {
   const t = e.target;
+  if (!t.closest || !t.closest('#invTable, .rs-list')) return;
   if (t.dataset.copy) { await copy(link(t.dataset.copy)); toast('Link copied'); }
   if (t.dataset.text) {
     const i = DATA.invites.find(x => x.id === t.dataset.text);
@@ -465,13 +493,37 @@ function legsHtml(h) {
   return '<ul>' + legs.map(l => `<li>${l.dir === 'arrive' ? '✈️ In' : '🛫 Out'} ${fmt(l.date)} ${fmtTime(l.time)} · ${esc([l.airline, l.number].filter(Boolean).join(' '))}${l.airport ? ' · ' + esc(l.airport) : ''}${l.everyone ? '' : ' · ' + esc((l.who || []).join(', '))}</li>`).join('') + '</ul>';
 }
 
-function renderResponses() {
-  const resp = DATA.invites.filter(i => i.household).sort((a, b) => (b.household.updated_at || '').localeCompare(a.household.updated_at || ''));
+/* ---------- responses: one list of every invite, searchable and filterable ---------- */
+const RS = { f: 'all', q: '', sort: 'name', open: new Set() };
+const RS_STATUS = { yes: '✅ Yes', maybe: '🤔 Maybe', no: '❌ Can’t come', waiting: '⏳ Waiting' };
+function rsStatus(i) { return i.household ? i.household.attending : 'waiting'; }
+function rsHay(i) {
+  const h = i.household || {}, bits = [i.label, i.party_names, i.private_note, h.contact_name, h.email, h.phone];
+  (h.members || []).forEach(m => bits.push(m.full_name, m.email, m.phone));
+  const t = bits.filter(Boolean).join(' ').toLowerCase();
+  return t + ' ' + t.replace(/\D/g, '');
+}
+function rsMatches() {
+  const q = RS.q.trim().toLowerCase(), qd = q.replace(/\D/g, '');
+  return DATA.invites.filter(i => (RS.f === 'all' || (RS.f === 'unsent' ? !i.household && !i.sent_at : rsStatus(i) === RS.f)) &&
+    (!q || q.split(/\s+/).every(w => rsHay(i).includes(w)) || (qd.length >= 4 && rsHay(i).includes(qd))));
+}
+function detailHtml(i) {
   const ev = Object.fromEntries(DATA.events.map(e => [e.id, e]));
   // show each family's events in schedule order (date, then the order on the day)
   const inOrder = (rows) => rows.filter(r => ev[r.event_id]).sort((a, b) => ev[a.event_id].event_date.localeCompare(ev[b.event_id].event_date) || (ev[a.event_id].sort - ev[b.event_id].sort));
   const plan = { bm_only: 'Bar Mitzvah only', passover_full: 'BM + all of Passover', passover_first: 'BM + first half of Passover', passover_second: 'BM + second half of Passover', unsure: 'Not sure yet' };
-  $$panel('responses').innerHTML = resp.length ? resp.map(i => {
+  if (!i.household) {
+    return `<div class="hh-body"><p>${i.sent_at ? `Link sent ${fmtSent(i.sent_at)}, no answer yet.` : 'Link not sent yet.'}${i.party_names ? ` Invite is for ${esc(i.party_names)}.` : ''}</p>
+      ${i.private_note ? `<p class="muted">${esc(i.private_note)}</p>` : ''}
+      <button class="small-btn" data-text="${i.id}">Copy text message</button><button class="small-btn" data-copy="${i.code}">Copy link</button></div>`;
+  }
+  if (i.household.attending === 'no') {
+    const h = i.household;
+    return `<div class="hh-body"><p class="muted">Answered ${new Date(h.updated_at).toLocaleString()}${h.contact_name && h.contact_name !== i.label ? ' · ' + esc(h.contact_name) : ''}</p>
+      ${h.notes ? `<h4>Their note</h4><p>${esc(h.notes)}</p>` : '<p class="muted">No note.</p>'}</div>`;
+  }
+  const out = (() => {
     const h = i.household, rr = h.room_requests || {};
     if (i.invite_type === 'events') return `<div class="hh"><h3>${esc(i.label)} <span class="muted">· event-only</span></h3>
       <p class="muted">${statusText(i)}${i.covered_by ? ' · covered by ' + esc(i.covered_by) : ''} · updated ${new Date(h.updated_at).toLocaleString()}</p>
@@ -494,7 +546,58 @@ function renderResponses() {
       </div>
       <h4>Events</h4><ul>${inOrder(h.events).filter(r => r.choice !== 'none').map(r => ev[r.event_id] ? `<li>${ev[r.event_id].emoji} ${fmt(ev[r.event_id].event_date)} ${esc(ev[r.event_id].title)}: ${r.adults} adults, ${r.kids} kids</li>` : '').join('') || '<li>None</li>'}</ul>
       ${h.notes ? `<h4>Notes</h4><p>${esc(h.notes)}</p>` : ''}</div>`;
-  }).join('') : '<section class="card"><p>No responses yet.</p></section>';
+  })();
+  return out.replace(/^<div class="hh">/, '<div class="hh-body">');
+}
+function summaryLine(i) {
+  const h = i.household, p = people(h);
+  if (!h) return i.sent_at ? `Sent ${fmtSent(i.sent_at)}` : 'Not sent yet';
+  if (h.attending === 'no') return h.notes ? 'Left a note' : '';
+  if (i.invite_type === 'events') { const n = h.events.reduce((m, r) => Math.max(m, r.adults + r.kids), 0); return `Event-only · up to ${n}`; }
+  const plan = { bm_only: 'Bar Mitzvah only', passover_full: 'BM + all of Passover', passover_first: 'BM + first half', passover_second: 'BM + second half', unsure: 'Dates not sure' };
+  const when = h.arrival_date ? `${fmt(h.arrival_date)} – ${fmt(h.departure_date)}` : (plan[h.trip_plan] || '');
+  return [`${p.a + p.k} ${p.a + p.k === 1 ? 'person' : 'people'} (${p.a}A/${p.k}K)`, when, (h.flight_legs || []).some(l => l.dir === 'arrive') ? '✈️ flights in' : ''].filter(Boolean).join(' · ');
+}
+function renderResponses() {
+  const all = DATA.invites, count = (f) => all.filter(i => f === 'unsent' ? !i.household && !i.sent_at : rsStatus(i) === f).length;
+  const rows = rsMatches().sort((a, b) => RS.sort === 'recent'
+    ? ((b.household && b.household.updated_at) || '').localeCompare((a.household && a.household.updated_at) || '') || a.label.localeCompare(b.label)
+    : a.label.localeCompare(b.label));
+  let A = 0, K = 0; rows.forEach(i => { if (i.household && i.household.attending !== 'no') { const p = people(i.household); A += p.a; K += p.k; } });
+  const btn = (f, label, n) => `<button class="seg${RS.f === f ? ' on' : ''}" data-rsf="${f}">${label} <span class="cnt">${n}</span></button>`;
+  const panel = $$panel('responses');
+  panel.innerHTML = `
+    <div class="rs-bar">
+      <input type="search" id="rsSearch" placeholder="Search a name, email or phone" value="${esc(RS.q)}">
+      <div class="segs">${btn('all', 'Everyone', all.length)}${btn('yes', '✅ Yes', count('yes'))}${btn('maybe', '🤔 Maybe', count('maybe'))}${btn('no', '❌ Can’t come', count('no'))}${btn('waiting', '⏳ Waiting', count('waiting'))}${btn('unsent', '✉️ Not sent', count('unsent'))}</div>
+      <div class="rs-tools">
+        <span class="muted">${rows.length} ${rows.length === 1 ? 'family' : 'families'}${A + K ? ` · ${A + K} people (${A} adults, ${K} kids)` : ''}</span>
+        <span class="spacer"></span>
+        <label class="muted">Sort <select id="rsSort"><option value="name"${RS.sort === 'name' ? ' selected' : ''}>A–Z</option><option value="recent"${RS.sort === 'recent' ? ' selected' : ''}>Latest answers first</option></select></label>
+        <button class="small-btn" id="rsExpand">${rows.length && rows.every(i => RS.open.has(i.id)) ? 'Collapse all' : 'Expand all'}</button>
+        <button class="small-btn" id="rsCopyNames">Copy these names</button>
+      </div>
+    </div>
+    <div class="rs-list">${rows.map(i => `
+      <details class="rs-row" data-id="${i.id}"${RS.open.has(i.id) ? ' open' : ''}>
+        <summary><span class="rs-name">${esc(i.label)}${i.invite_type === 'events' ? ' <span class="muted">· event-only</span>' : ''}</span>
+          <span class="rs-st st-${rsStatus(i)}">${RS_STATUS[rsStatus(i)]}</span>
+          <span class="rs-sum muted">${esc(summaryLine(i))}</span><span class="acc-i" aria-hidden="true"></span></summary>
+        ${RS.open.has(i.id) ? detailHtml(i) : ''}
+      </details>`).join('') || '<section class="card"><p>No families match.</p></section>'}</div>`;
+  const si = $('rsSearch'); si.oninput = () => { RS.q = si.value; const pos = si.selectionStart; renderResponses(); const n = $('rsSearch'); n.focus(); n.setSelectionRange(pos, pos); };
+  $('rsSort').onchange = (e) => { RS.sort = e.target.value; renderResponses(); };
+  panel.querySelectorAll('[data-rsf]').forEach(b => b.onclick = () => { RS.f = b.dataset.rsf; renderResponses(); });
+  $('rsExpand').onclick = () => { const allOpen = rows.every(i => RS.open.has(i.id)); rows.forEach(i => allOpen ? RS.open.delete(i.id) : RS.open.add(i.id)); renderResponses(); };
+  $('rsCopyNames').onclick = async () => { await copy(rows.map(i => i.label).join('\n')); toast(`Copied ${rows.length} names`); };
+  panel.querySelectorAll('.rs-row').forEach(d => d.addEventListener('toggle', () => {
+    const id = d.dataset.id, i = DATA.invites.find(x => x.id === id);
+    if (d.open) { RS.open.add(id); if (!d.querySelector('.hh-body')) d.insertAdjacentHTML('beforeend', detailHtml(i)); } else RS.open.delete(id);
+  }));
+}
+function showResponses(f) {
+  RS.f = f; RS.q = ''; renderResponses();
+  document.querySelector('.tab[data-tab=responses]').click(); window.scrollTo({ top: 0 });
 }
 
 function csv(rows) { return rows.map(r => r.map(v => { v = v == null ? '' : String(v); return /[",\n]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v; }).join(',')).join('\n'); }
