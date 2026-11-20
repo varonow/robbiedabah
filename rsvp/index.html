@@ -72,7 +72,7 @@
           </div>
         </details>
         <p id="moneyNote" class="hint hidden" style="font-size:17px;margin-top:18px"></p>
-        <p style="margin:22px 0 0">The rest of the RSVP takes about five minutes. Once it’s sent, if anything changes, just text Danielle or Mac.</p>
+        <p style="margin:22px 0 0">The rest of the RSVP takes about five minutes. Once it’s sent, you can come back to this same link anytime to make changes.</p>
         <div class="step-nav"><span class="spacer"></span><button type="button" class="btn" data-next id="welcomeNext">Next: your details</button></div>
       </div>
     </section>
@@ -294,13 +294,14 @@
   <section class="card thanks hidden" id="thanks" style="margin-top:-36px;position:relative">
     <h2><span class="ico">🎉</span> Thank you</h2>
     <p id="thanksMsg">We've got your RSVP.</p>
-    <p>If anything changes, just text Danielle or Mac and they’ll update it for you.</p>
+    <p>If anything changes, just open this same link again to update your RSVP.</p>
   </section>
 
   <section class="card review hidden" id="received" style="margin-top:-36px;position:relative">
     <p class="step-label">Welcome back</p>
     <h2><span class="ico">✅</span> We have your RSVP</h2>
-    <p class="lede">Here’s what you sent us. If anything changes, just text Danielle or Mac and they’ll update it for you.</p>
+    <p class="lede">Here’s what you sent us. Plans change, so you can update it here anytime.</p>
+    <div class="step-nav" style="margin:0 0 18px"><span class="spacer"></span><button type="button" class="btn" id="changeRsvpBtn">✏️ Change my RSVP</button></div>
     <p class="saved-msg hidden" id="flightsSaved">✓ Your flights are saved.</p>
     <div id="receivedBody"></div>
     <div id="flightsCta" class="hidden">
@@ -1045,8 +1046,9 @@ function greetName(label) {
       hasRsvp = true; $('eoSubmit').textContent = 'Update my RSVP';
     }
     renderEventOnly(inv);
-    if (inv.rsvp && !inv.can_edit) {
+    if (inv.rsvp) {
       const r = inv.rsvp;
+      $('changeRsvpBtn').onclick = () => { $('received').classList.add('hidden'); $('eventOnly').classList.remove('hidden'); window.scrollTo({ top: document.querySelector('.band').offsetTop, behavior: 'smooth' }); };
       $('receivedBody').innerHTML = `<div class="rv"><div class="rv-head"><h4>Name</h4></div><p>${esc(r.contact_name)}${r.phone ? ' · ' + esc(r.phone) : ''}${r.email ? ' · ' + esc(r.email) : ''}</p></div>
         <div class="rv"><div class="rv-head"><h4>Your answers</h4></div><ul>${EO.map(e => { const x = (r.events || []).find(y => y.event_id === e.id);
           return `<li>${e.emoji} ${fmtShort(e.event_date)} · ${esc(e.title)} · ${!x || x.choice === 'none' ? 'can\u2019t make it' : plural(x.adults, 'adult', 'adults') + (x.kids ? ', ' + plural(x.kids, 'kid', 'kids') : '')}</li>`; }).join('')}</ul></div>
@@ -1066,13 +1068,18 @@ function greetName(label) {
     + `Married children with families of their own are getting their own invitation, so please ${pn.length ? 'list only the people above' : 'list only your own household'}.`;
   applyWording();
   const draft = (() => { try { return JSON.parse(lsGet('robbie_draft_' + code) || 'null'); } catch (e) { return null; } })();
-  if (inv.rsvp && !inv.can_edit) {
-    fill(inv.rsvp); renderReview('receivedBody', false);
+  const gn = greetName(inv.label);
+  $('household_name').value = inv.label || ''; $('familyLabel').textContent = inv.label || '';
+  if (inv.rsvp) {
+    // Already answered: show what they sent, with a way to change it anytime
+    fill(inv.rsvp); hasRsvp = true; $('submitBtn').textContent = 'Update my RSVP';
+    $('greeting').textContent = gn ? `Welcome back, ${gn}` : 'Welcome back';
+    refreshDatesStep(); renderReview('receivedBody', false);
     $('flightsCta').classList.toggle('hidden', inv.rsvp.attending === 'no');
     $('received').classList.remove('hidden');
+    $('changeRsvpBtn').onclick = () => { $('received').classList.add('hidden'); $('wizard').classList.remove('hidden'); show(0); };
     return;
   }
-  const gn = greetName(inv.label);
   $('greeting').textContent = gn ? `${gn}, you're invited` : 'You’re invited';
   if (inv.rsvp) { fill(inv.rsvp); hasRsvp = true; $('submitBtn').textContent = 'Update my RSVP'; $('greeting').textContent = gn ? `Welcome back, ${gn}` : 'Welcome back'; }
   else if (draft) { fill(draft); $('greeting').textContent = gn ? `Welcome back, ${gn}` : 'Welcome back'; }

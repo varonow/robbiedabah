@@ -84,6 +84,11 @@
   .inv-thumb { width: 150px; height: auto; box-shadow: var(--shadow); border-radius: 4px; }
   .invite-card a.small-btn { display: inline-block; text-decoration: none; }
   @media (max-width: 760px) { .invite-card { grid-template-columns: 1fr; } .inv-thumb { width: 160px; } }
+  .chg-list { list-style: none; padding: 0; margin: 0; }
+  .hh-body ul.chg-list { padding-left: 0; }
+  .chg-list > .chg { padding: 10px 0; border-bottom: 1px solid var(--line); }
+  .chg-list > .chg:last-child { border-bottom: 0; }
+  .chg ul { margin: 4px 0 0; padding-left: 22px; }
   .toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: var(--ink); color: #fff; padding: 12px 20px; border-radius: 8px; font-family: var(--label); display: none; z-index: 10; }
 </style>
 </head>
@@ -215,6 +220,16 @@ function statusText(i) {
 }
 function people(h) { const m = h ? h.members : []; return { a: m.filter(x => !x.is_child).length, k: m.filter(x => x.is_child).length }; }
 
+/* ---------- change log ---------- */
+const KIND = { new: 'sent their RSVP', update: 'made changes', flights: 'updated flights' };
+function fmtWhen(ts) { return new Date(ts).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }); }
+function changesFor(id) { return (DATA.changes || []).filter(c => c.invite_id === id); }
+function changeItem(c, withName) {
+  const i = DATA.invites.find(x => x.id === c.invite_id); if (!i) return '';
+  const items = (c.summary || []).filter(x => !(c.kind === 'new' && /^Sent their RSVP/.test(x)));
+  return `<li class="chg"><span class="muted">${fmtWhen(c.created_at)}</span> ${withName ? `<strong>${esc(i.label)}</strong> ` : ''}${KIND[c.kind] || ''}${c.kind === 'new' ? ': ' + esc((c.summary[0] || '').replace('Sent their RSVP: ', '')) : ''}
+    ${items.length ? `<ul>${items.map(x => `<li>${esc(x)}</li>`).join('')}</ul>` : ''}</li>`;
+}
 function renderAll() {
   $('inv_events').innerHTML = DATA.events.map(e => `<label><input type="checkbox" class="inv-ev" value="${e.id}"> ${e.emoji} ${fmt(e.event_date)} · ${esc(e.title)}</label>`).join('');
   renderOverview(); renderEvents(); renderInvites(); renderFlights(); renderResponses();
@@ -257,6 +272,10 @@ function renderOverview() {
       <div class="tile"><div class="n">${eoResp.length} / ${eoInv.length}</div><div class="l">Event-only guests answered</div></div>
     </div>
     ${dupesHtml()}
+    <section class="card"><h2><span class="ico">🔔</span> Recent changes</h2>
+      <p class="muted">Families can change their RSVP anytime from their link. Every new RSVP and change shows up here, newest first.</p>
+      <ul class="chg-list">${(DATA.changes || []).slice(0, 20).map(c => changeItem(c, true)).join('') || '<li class="muted">Nothing yet.</li>'}</ul>
+      ${(DATA.changes || []).length > 20 ? '<p class="muted">Older changes are in each family’s History on the Responses tab.</p>' : ''}</section>
     <section class="card"><h2><span class="ico">⏳</span> Still waiting on</h2>
       <p>${all.filter(i => !i.household).map(i => esc(i.label) + (i.invite_type === 'events' ? ' <span class="muted">(event-only)</span>' : '')).join(' · ') || 'Everyone has answered.'}</p></section>
     <section class="card"><h2><span class="ico">⬇️</span> Export</h2>
@@ -326,8 +345,7 @@ function renderInvites() {
         <td>${i.sent_at ? `<span class="sent-ok">✓ ${fmtSent(i.sent_at)}</span><button class="small-btn linkish" data-unsent="${i.id}">Undo</button>` : `<button class="small-btn" data-sent="${i.id}">Mark sent</button>`}</td>
         <td>${rs2}</td>
         <td><button class="small-btn" data-copy="${i.code}">Copy link</button><button class="small-btn" data-text="${i.id}">Copy text message</button></td>
-        <td>${h ? (i.allow_edit ? `<div class="muted">🔓 Open for changes</div><button class="small-btn" data-lock="${i.id}">Lock</button>` : `<button class="small-btn" data-reopen="${i.id}">Reopen for changes</button>`) : ''}
-          <button class="small-btn" data-edit="${i.id}">Edit</button><button class="small-btn danger" data-del="${i.id}">Delete</button></td></tr>`;
+        <td><button class="small-btn" data-edit="${i.id}">Edit</button><button class="small-btn danger" data-del="${i.id}">Delete</button></td></tr>`;
     }).join('') + '</tbody>';
 }
 $('invSearch').oninput = renderInvites; $('invFilter').onchange = renderInvites;
@@ -577,7 +595,8 @@ function detailHtml(i) {
       <h4>Events</h4><ul>${inOrder(h.events).filter(r => r.choice !== 'none').map(r => ev[r.event_id] ? `<li>${ev[r.event_id].emoji} ${fmt(ev[r.event_id].event_date)} ${esc(ev[r.event_id].title)}: ${r.adults} adults, ${r.kids} kids</li>` : '').join('') || '<li>None</li>'}</ul>
       ${h.notes ? `<h4>Notes</h4><p>${esc(h.notes)}</p>` : ''}</div>`;
   })();
-  return out.replace(/^<div class="hh">/, '<div class="hh-body">');
+  const hist = changesFor(i.id);
+  return out.replace(/^<div class="hh">/, '<div class="hh-body">').replace(/<\/div>$/, hist.length ? `<h4>History</h4><ul class="chg-list">${hist.map(c => changeItem(c, false)).join('')}</ul></div>` : '</div>');
 }
 function summaryLine(i) {
   const h = i.household, p = people(h);
@@ -586,7 +605,8 @@ function summaryLine(i) {
   if (i.invite_type === 'events') { const n = h.events.reduce((m, r) => Math.max(m, r.adults + r.kids), 0); return `Event-only · up to ${n}`; }
   const plan = { bm_only: 'Bar Mitzvah only', passover_full: 'BM + all of Passover', passover_first: 'BM + first half', passover_second: 'BM + second half', unsure: 'Dates not sure' };
   const when = h.arrival_date ? `${fmt(h.arrival_date)} – ${fmt(h.departure_date)}` : (plan[h.trip_plan] || '');
-  return [`${p.a + p.k} ${p.a + p.k === 1 ? 'person' : 'people'} (${p.a}A/${p.k}K)`, when, (h.flight_legs || []).some(l => l.dir === 'arrive') ? '✈️ flights in' : ''].filter(Boolean).join(' · ');
+  const upd = changesFor(i.id).find(c => c.kind !== 'new');
+  return [`${p.a + p.k} ${p.a + p.k === 1 ? 'person' : 'people'} (${p.a}A/${p.k}K)`, when, (h.flight_legs || []).some(l => l.dir === 'arrive') ? '✈️ flights in' : '', upd ? `✏️ changed ${fmtSent(upd.created_at)}` : ''].filter(Boolean).join(' · ');
 }
 function renderResponses() {
   const all = DATA.invites, count = (f) => all.filter(i => f === 'unsent' ? !i.household && !i.sent_at : rsStatus(i) === f).length;
