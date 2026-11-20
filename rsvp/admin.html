@@ -90,6 +90,14 @@
   .chg-list > .chg:last-child { border-bottom: 0; }
   .chg ul { margin: 4px 0 0; padding-left: 22px; }
   .rs-plain { padding-left: 20px; } .rs-plain li { margin: 6px 0; }
+  .hc-top { display: flex; flex-wrap: wrap; gap: 8px 20px; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+  .hc-top p { margin: 0; flex: 1 1 420px; }
+  .hc-toggle { display: flex; align-items: center; gap: 8px; font-family: var(--label); font-weight: 600; font-size: 14px; text-transform: none; letter-spacing: 0; margin: 0; }
+  .hc-toggle input { width: 20px; height: 20px; }
+  table.hc th.grp { text-align: center; border-bottom: 1px solid var(--line); }
+  table.hc thead tr:first-child th { top: 0; } table.hc thead tr:nth-child(2) th { top: 36px; }
+  table.hc .mb { color: var(--gold-text); background: rgba(163,126,75,.06); }
+  table.hc .poss { background: var(--olive-pale); }
   .toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: var(--ink); color: #fff; padding: 12px 20px; border-radius: 8px; font-family: var(--label); display: none; z-index: 10; }
 </style>
 </head>
@@ -253,7 +261,7 @@ function renderOverview() {
   const inv = all.filter(i => i.invite_type !== 'events'), resp = inv.filter(i => i.household);
   const eoResp = eoInv.filter(i => i.household);
   const coming = resp.filter(i => i.household.attending !== 'no');
-  let a = 0, k = 0; coming.forEach(i => { const p = people(i.household); a += p.a; k += p.k; });
+  let a = 0, k = 0, py = 0; coming.forEach(i => { const p = people(i.household); a += p.a; k += p.k; if (i.household.attending === 'yes') py += p.a + p.k; });
   const cnt = (f) => coming.filter(f).length;
   const roomsJ = coming.reduce((s, i) => s + ((i.household.room_requests || {}).jerusalem || []).length, 0);
   const roomsT = coming.reduce((s, i) => s + ((i.household.room_requests || {}).telaviv || []).length, 0);
@@ -266,7 +274,9 @@ function renderOverview() {
       <button class="tile go" onclick="showResponses('yes')"><div class="n">${cnt(i => i.household.attending === 'yes')}</div><div class="l">Families coming ›</div></button>
       <button class="tile go" onclick="showResponses('maybe')"><div class="n">${cnt(i => i.household.attending === 'maybe')}</div><div class="l">Maybe ›</div></button>
       <button class="tile go" onclick="showResponses('no')"><div class="n">${resp.length - coming.length}</div><div class="l">Can't come ›</div></button>
-      <div class="tile"><div class="n">${a + k}</div><div class="l">People (${a} adults, ${k} kids)</div></div>
+      <div class="tile"><div class="n">${py}</div><div class="l">People who said yes</div></div>
+      <div class="tile"><div class="n">${a + k - py}</div><div class="l">People who are maybe</div></div>
+      <div class="tile"><div class="n">${a + k}</div><div class="l">Possible total (${a} adults, ${k} kids)</div></div>
       <div class="tile"><div class="n">${roomsJ}</div><div class="l">King David rooms asked for</div></div>
       <div class="tile"><div class="n">${roomsT}</div><div class="l">InterContinental rooms asked for</div></div>
       <div class="tile"><div class="n">${cnt(i => i.household.wants_transfer === 'yes')}</div><div class="l">Want VIP &amp; transfers</div></div>
@@ -327,28 +337,37 @@ function dupesHtml() {
 }
 function $$panel(n) { return document.querySelector(`[data-panel="${n}"]`); }
 
+let SHOW_COST = false;
 function renderEvents() {
-  let html = `<p class="muted">Counts come from each family's answers and include families who said Yes and Maybe. "Yes only" is the firm number. "Paying" and "Comped" split the shared Passover items by each invite's comp status. Hosted events have no split.</p>
-    <div class="tablewrap"><table><thead><tr><th>Event</th><th class="num">Families</th><th class="num">Adults</th><th class="num">Kids</th><th class="num">Total</th><th class="num">Yes only</th><th class="num">Maybe</th><th class="num">Paying (A/K)</th><th class="num">Comped (A/K)</th><th>Comped by</th></tr></thead><tbody>`;
+  const cost = SHOW_COST;
+  let html = `<div class="hc-top"><p class="muted">For each event: how many adults and children said Yes, how many are Maybe, and the possible total if every maybe comes. Families who can't come aren't counted.</p>
+    <label class="hc-toggle"><input type="checkbox" id="hcCost"${cost ? ' checked' : ''}> Show paying vs comped</label></div>
+    <div class="tablewrap"><table class="hc"><thead>
+      <tr><th rowspan="2">Event</th><th colspan="2" class="grp">Adults</th><th colspan="2" class="grp">Children</th><th colspan="2" class="grp">Total</th><th rowspan="2" class="num poss">Possible<br>total</th>${cost ? '<th rowspan="2" class="num">Paying<br>(A/K)</th><th rowspan="2" class="num">Comped<br>(A/K)</th><th rowspan="2">Comped by</th>' : ''}</tr>
+      <tr><th class="num">Yes</th><th class="num mb">Maybe</th><th class="num">Yes</th><th class="num mb">Maybe</th><th class="num">Yes</th><th class="num mb">Maybe</th></tr>
+    </thead><tbody>`;
+  const cols = cost ? 11 : 8;
   let last = '';
   DATA.events.forEach(e => {
-    if (e.event_date !== last) { html += `<tr class="daysep"><td colspan="10">${fmt(e.event_date)}</td></tr>`; last = e.event_date; }
-    let f = 0, A = 0, K = 0, Y = 0, pa = 0, pk = 0, ca = 0, ck = 0; const by = {};
+    if (e.event_date !== last) { html += `<tr class="daysep"><td colspan="${cols}">${fmt(e.event_date)}</td></tr>`; last = e.event_date; }
+    let ay = 0, am = 0, ky = 0, km = 0, pa = 0, pk = 0, ca = 0, ck = 0; const by = {};
     DATA.invites.forEach(i => {
       const h = i.household; if (!h || h.attending === 'no') return;
       const r = h.events.find(x => x.event_id === e.id); if (!r || r.choice === 'none') return;
-      f++; A += r.adults; K += r.kids; if (h.attending === 'yes') Y += r.adults + r.kids;
+      if (h.attending === 'yes') { ay += r.adults; ky += r.kids; } else { am += r.adults; km += r.kids; }
       if (e.cost_type !== 'hosted') {
         if (i.comp[e.comp_category]) { ca += r.adults; ck += r.kids; const b = i.covered_by || 'Unassigned'; by[b] = (by[b] || 0) + r.adults + r.kids; }
         else { pa += r.adults; pk += r.kids; }
       }
     });
     const hosted = e.cost_type === 'hosted';
-    html += `<tr><td>${e.emoji} ${esc(e.title)}${hosted ? ' <span class="muted">· hosted</span>' : ''}</td><td class="num">${f}</td><td class="num">${A}</td><td class="num">${K}</td><td class="num">${A + K}</td><td class="num"><strong>${Y}</strong></td><td class="num">${A + K - Y}</td>
-      <td class="num">${hosted ? '' : pa + ' / ' + pk}</td><td class="num">${hosted ? '' : ca + ' / ' + ck}</td>
-      <td class="muted">${hosted ? '' : Object.entries(by).map(([b, n]) => `${esc(b)} ${n}`).join(' · ')}</td></tr>`;
+    html += `<tr><td>${e.emoji} ${esc(e.title)}${hosted ? ' <span class="muted">· hosted</span>' : ''}</td>
+      <td class="num">${ay}</td><td class="num mb">${am}</td><td class="num">${ky}</td><td class="num mb">${km}</td>
+      <td class="num"><strong>${ay + ky}</strong></td><td class="num mb">${am + km}</td><td class="num poss"><strong>${ay + ky + am + km}</strong></td>
+      ${cost ? `<td class="num">${hosted ? '' : pa + ' / ' + pk}</td><td class="num">${hosted ? '' : ca + ' / ' + ck}</td><td class="muted">${hosted ? '' : Object.entries(by).map(([b, n]) => `${esc(b)} ${n}`).join(' · ')}</td>` : ''}</tr>`;
   });
   $$panel('events').innerHTML = html + '</tbody></table></div>';
+  $('hcCost').onchange = (ev) => { SHOW_COST = ev.target.checked; renderEvents(); };
 }
 
 function renderInvites() {
