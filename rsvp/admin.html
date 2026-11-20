@@ -104,6 +104,11 @@
   table.pr td:first-child { white-space: nowrap; }
   .pr-h { font-family: var(--display); font-weight: 400; font-size: 24px; color: var(--olive); margin: 22px 0 10px; }
   .pr-lines summary { cursor: pointer; font-size: 14px; } .pr-lines ul { margin: 4px 0 0; padding-left: 18px; font-size: 15px; }
+  .rm-rates { display: grid; grid-template-columns: repeat(auto-fit, minmax(380px, 1fr)); gap: 18px 28px; }
+  .rm-rates h4 { font-family: var(--label); text-transform: uppercase; letter-spacing: .05em; font-size: 13px; color: var(--gold-text); margin: 0 0 6px; }
+  .rm-rates table td { padding: 6px 8px; }
+  ul.rm-lines { margin: 4px 0 0; padding-left: 18px; font-size: 16px; }
+  table.rm td { font-size: 16px; }
   .toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: var(--ink); color: #fff; padding: 12px 20px; border-radius: 8px; font-family: var(--label); display: none; z-index: 10; }
 </style>
 </head>
@@ -127,6 +132,7 @@
       <button class="tab" data-tab="overview" aria-selected="true">Overview</button>
       <button class="tab" data-tab="events">Headcounts</button>
       <button class="tab" data-tab="pricing">Pricing</button>
+      <button class="tab" data-tab="rooms">Hotel rooms</button>
       <button class="tab" data-tab="invites">Invites &amp; links</button>
       <button class="tab" data-tab="flights">Arrivals</button>
       <button class="tab" data-tab="responses">Responses</button>
@@ -135,6 +141,7 @@
     <div data-panel="overview"></div>
     <div data-panel="events" class="hidden"></div>
     <div data-panel="pricing" class="hidden"></div>
+    <div data-panel="rooms" class="hidden"></div>
     <div data-panel="flights" class="hidden"></div>
     <div data-panel="invites" class="hidden">
       <section class="card invite-card">
@@ -249,7 +256,7 @@ function changeItem(c, withName) {
 }
 function renderAll() {
   $('inv_events').innerHTML = DATA.events.map(e => `<label><input type="checkbox" class="inv-ev" value="${e.id}"> ${e.emoji} ${fmt(e.event_date)} · ${esc(e.title)}</label>`).join('');
-  renderOverview(); renderEvents(); renderPricing(); renderInvites(); renderFlights(); renderResponses();
+  renderOverview(); renderEvents(); renderPricing(); renderRooms(); renderInvites(); renderFlights(); renderResponses();
 }
 $('inv_type').onchange = () => { $('inv_events_wrap').classList.toggle('hidden', $('inv_type').value !== 'events'); if (DATA) invPreview(); };
 function evNames(ids) { return DATA.events.filter(e => ids.includes(e.id)).map(e => e.title); }
@@ -445,7 +452,7 @@ function renderPricing() {
             <td class="muted">${priced ? Object.entries(cov).map(([k, v]) => `${esc(k)} ${money(v)}`).join(' · ') : ''}</td></tr>`; }).join('')}
       </tbody></table></div>
       <p><button class="btn secondary" id="prExport">Bills spreadsheet</button></p>
-      <p class="muted">Hotel rooms and airport transfers aren't priced here yet. They're priced per room and per trip rather than per person, so they can be added separately.</p>
+      <p class="muted">Hotel rooms are on the Hotel rooms tab. Airport transfers aren't priced yet.</p>
     </section>`;
   const pan = $$panel('pricing');
   pan.querySelectorAll('[data-prb]').forEach(b => b.onclick = () => { PR.basis = b.dataset.prb; renderPricing(); });
@@ -462,6 +469,125 @@ function renderPricing() {
     const rows = [['Family', 'Attending', 'Event', 'Date', 'Adults', 'Children', 'Adult price', 'Child price', 'Cost', 'Who pays']];
     ch.forEach(c => rows.push([c.i.label, c.i.household.attending, c.e.title, c.e.event_date, c.a, c.k, c.e.price_adult ?? '', c.e.price_child ?? '', c.priced ? c.cost.toFixed(2) : '', c.payer === 'family' ? 'Family' : c.payer]));
     download(PR.basis === 'yes' ? 'robbie-bills-yes.csv' : 'robbie-bills-yes-and-maybe.csv', csv(rows));
+  };
+}
+
+/* ---------- hotel rooms: nightly rates, each family's rooms and nights, who pays ---------- */
+const HOTEL = {
+  jerusalem: { name: 'King David', full: 'King David Hotel, Jerusalem', start: '2027-04-16', end: '2027-04-20', key: 'hotel_jerusalem',
+    types: ['Deluxe Room, New City view', 'Deluxe Room, Old City view', 'Family Room (up to 4)', 'Garden Room', 'Junior Suite', 'Mini Suite', 'Executive Suite'] },
+  telaviv: { name: 'InterContinental', full: 'David InterContinental, Tel Aviv', start: '2027-04-20', end: '2027-04-30', key: 'hotel_telaviv',
+    types: ['Classic Room', 'Classic Room + child', 'Premium Executive Room', 'Premium Club Room', 'Jaffa Suite', 'Mediterranean Suite', 'Royal Suite', 'Presidential Suite'] }
+};
+const NOT_CHOSEN = 'Not chosen yet';
+const RM = { q: '', basis: 'yes', openRates: false };
+const days = (a, b) => Math.max(0, Math.round((new Date(b + 'T12:00:00') - new Date(a + 'T12:00:00')) / 864e5));
+function nightsAt(h, hk) {
+  const H = HOTEL[hk];
+  if (h.arrival_date && h.departure_date) {
+    const a = h.arrival_date > H.start ? h.arrival_date : H.start, b = h.departure_date < H.end ? h.departure_date : H.end;
+    return { n: days(a, b), est: false };
+  }
+  // No dates yet: estimate from the plan they picked
+  const plan = h.trip_plan || 'unsure';
+  if (hk === 'jerusalem') return { n: days(H.start, H.end), est: true };
+  const tlv = { bm_only: 0, passover_full: days('2027-04-20', '2027-04-30'), passover_first: days('2027-04-20', '2027-04-25'), passover_second: days('2027-04-25', '2027-04-30'), unsure: days('2027-04-20', '2027-04-30') };
+  return { n: tlv[plan] ?? 0, est: true };
+}
+function rate(hk, type) {
+  const rr = DATA.room_rates || [], t = (type && HOTEL[hk].types.includes(type)) ? type : NOT_CHOSEN;
+  const r = rr.find(x => x.hotel === hk && x.room_type === t), d = rr.find(x => x.hotel === hk && x.room_type === NOT_CHOSEN);
+  const v = r && r.nightly != null ? Number(r.nightly) : (d && d.nightly != null ? Number(d.nightly) : null);
+  return { v, usedDefault: !(r && r.nightly != null), t };
+}
+function roomRows() {
+  const out = [];
+  DATA.invites.forEach(i => {
+    const h = i.household; if (!h || h.attending === 'no' || i.invite_type === 'events') return;
+    const payer = i.comp.rooms ? (i.covered_by || 'Unassigned') : 'Themselves';
+    const hotels = [];
+    ['jerusalem', 'telaviv'].forEach(hk => {
+      const ans = h[HOTEL[hk].key]; if (ans !== 'yes' && ans !== 'unsure') return;
+      if (RM.basis === 'yes' && (ans !== 'yes' || h.attending !== 'yes')) return;
+      const rooms = ((h.room_requests || {})[hk] || []); const nn = nightsAt(h, hk);
+      const lines = (rooms.length ? rooms : [{ type: '', who: '' }]).map(r => { const rt = rate(hk, r.type); return { type: r.type, who: r.who, rate: rt.v, def: rt.usedDefault, cost: rt.v == null ? null : rt.v * nn.n }; });
+      hotels.push({ hk, ans, nights: nn.n, est: nn.est, lines, cost: lines.reduce((s, l) => s + (l.cost || 0), 0), priced: lines.every(l => l.cost != null) });
+    });
+    if (hotels.length) out.push({ i, h, payer, hotels, total: hotels.reduce((s, x) => s + x.cost, 0) });
+  });
+  return out;
+}
+function roomsDetail(i, hk) {
+  const h = i.household, ans = h[HOTEL[hk].key], rooms = (h.room_requests || {})[hk] || [];
+  if (ans !== 'yes' && ans !== 'unsure') return ans === 'no' ? 'Not staying' : '—';
+  const nn = nightsAt(h, hk);
+  const lines = rooms.map(r => { const rt = rate(hk, r.type);
+    return `<li>${esc(r.type || NOT_CHOSEN)}${r.who ? ' · ' + esc(r.who) : ''}${rt.v == null ? '' : ` · ${money(rt.v)}/night = <strong>${money(rt.v * nn.n)}</strong>`}</li>`; });
+  return `${ans === 'unsure' ? 'Not sure yet · ' : ''}${nn.n} night${nn.n === 1 ? '' : 's'}${nn.est ? ' (estimated)' : ''}${i.comp.rooms ? ` · covered by ${esc(i.covered_by || '?')}` : ''}${lines.length ? '<ul>' + lines.join('') + '</ul>' : ''}`;
+}
+function renderRooms() {
+  const pan = $$panel('rooms');
+  const all = roomRows();
+  const q = RM.q.trim().toLowerCase();
+  const rows = all.filter(r => !q || [r.i.label, r.payer, r.i.party_names, r.i.covered_by].filter(Boolean).join(' ').toLowerCase().includes(q))
+    .sort((a, b) => a.i.label.localeCompare(b.i.label));
+  const byPayer = {}; rows.forEach(r => byPayer[r.payer] = (byPayer[r.payer] || 0) + r.total);
+  const payers = [...new Set(all.map(r => r.payer))].sort();
+  const rr = DATA.room_rates || [];
+  const rateVal = (hk, t) => { const r = rr.find(x => x.hotel === hk && x.room_type === t); return r && r.nightly != null ? r.nightly : ''; };
+  // How many rooms of each type families have asked for, across everyone who answered
+  const asked = {};
+  DATA.invites.forEach(i => { const h = i.household; if (!h || h.attending === 'no' || i.invite_type === 'events') return;
+    ['jerusalem', 'telaviv'].forEach(hk => { const ans = h[HOTEL[hk].key]; if (ans !== 'yes' && ans !== 'unsure') return;
+      ((h.room_requests || {})[hk] || []).forEach(r => { const t = rate(hk, r.type).t, k = hk + '|' + t; asked[k] ||= { y: 0, m: 0 };
+        (h.attending === 'yes' && ans === 'yes') ? asked[k].y++ : asked[k].m++; }); }); });
+  const ratesHtml = ['jerusalem', 'telaviv'].map(hk => `<div><h4>${HOTEL[hk].full}</h4><div class="tablewrap"><table class="pr"><thead><tr><th>Room type</th><th class="num">Per night</th><th class="num">Asked for</th></tr></thead><tbody>
+      ${[...HOTEL[hk].types, NOT_CHOSEN].map(t => { const c = asked[hk + '|' + t] || { y: 0, m: 0 };
+        return `<tr><td>${esc(t)}${t === NOT_CHOSEN ? '<div class="muted">For rooms with no type picked yet, or “not sure”</div>' : ''}</td>
+        <td class="num"><input type="number" class="rr-in" data-hk="${hk}" data-t="${esc(t)}" min="0" step="0.01" inputmode="decimal" value="${rateVal(hk, t)}" placeholder="—"></td>
+        <td class="num">${c.y + c.m ? `${c.y}${c.m ? ` <span class="muted">+ ${c.m} maybe</span>` : ''}` : '<span class="muted">0</span>'}</td></tr>`; }).join('')}
+    </tbody></table></div></div>`).join('');
+  const hotelCell = (r, hk) => { const x = r.hotels.find(y => y.hk === hk); if (!x) return '<td class="muted">—</td>';
+    return `<td>${x.ans === 'unsure' ? '<span class="muted">Not sure yet · </span>' : ''}${x.nights} night${x.nights === 1 ? '' : 's'}${x.est ? ' <span class="muted">(estimated, no dates yet)</span>' : ''}
+      <ul class="rm-lines">${x.lines.map(l => `<li>${esc(l.type && HOTEL[hk].types.includes(l.type) ? l.type : (l.type || NOT_CHOSEN))}${l.who ? ` <span class="muted">· ${esc(l.who)}</span>` : ''}
+        ${l.rate == null ? ' <span class="muted">· no rate yet</span>' : ` · ${money(l.rate)}/night${l.def ? ' <span class="muted">(default)</span>' : ''} = <strong>${money(l.cost)}</strong>`}</li>`).join('')}</ul></td>`; };
+  pan.innerHTML = `
+    <section class="card" id="rmRates"><h2><span class="ico">🏨</span> Room types &amp; prices</h2>
+      <p class="muted">Price per room per night, in dollars. Guests never see these. “Asked for” counts the rooms families requested of each type.</p>
+      <div class="rm-rates">${ratesHtml}</div>
+      <p><button class="btn" id="rmSave">Save rates</button> <span class="muted" id="rmStatus"></span></p></section>
+    <h3 class="pr-h">Each family's rooms</h3>
+    <div class="rs-bar">
+      <input type="search" id="rmSearch" placeholder="Search a family or who pays, e.g. Victoria & Marshall or Themselves" value="${esc(RM.q)}" list="rmPayers">
+      <datalist id="rmPayers">${payers.map(p => `<option value="${esc(p)}">`).join('')}</datalist>
+      <div class="rs-tools">
+        <div class="segs"><button class="seg${RM.basis === 'yes' ? ' on' : ''}" data-rmb="yes">✅ Yes only</button><button class="seg${RM.basis === 'all' ? ' on' : ''}" data-rmb="all">✅ Yes + 🤔 Maybe / not sure</button></div>
+        <span class="spacer"></span><button class="small-btn" id="rmExport">Rooms spreadsheet</button>
+      </div>
+    </div>
+    <div class="tiles">${Object.entries(byPayer).sort((a, b) => b[1] - a[1]).map(([k, v]) => `<button class="tile go" data-rmq="${esc(k)}"><div class="n">${money(v)}</div><div class="l">${esc(k === 'Themselves' ? 'Families paying for themselves' : k)} ›</div></button>`).join('')}
+      <div class="tile"><div class="n">${money(rows.reduce((s, r) => s + r.total, 0))}</div><div class="l">${q ? 'Total for this search' : 'All rooms'}</div></div></div>
+    ${!rr.some(r => r.nightly != null) ? '<p class="muted">⚠️ No nightly rates yet. Add them under Room types &amp; prices above, and the prices fill in here.</p>' : ''}
+    <div class="tablewrap"><table class="rm"><thead><tr><th>Family</th><th>Who pays</th><th>King David · Apr 16–20</th><th>InterContinental · from Apr 20</th><th class="num">Total</th></tr></thead><tbody>
+      ${rows.map(r => `<tr><td><strong>${esc(r.i.label)}</strong>${r.h.attending === 'maybe' ? ' <span class="muted">· maybe</span>' : ''}${r.h.rooms_adjoining === 'yes' ? '<div class="muted">Needs adjoining</div>' : ''}${r.h.room_notes ? `<div class="muted">${esc(r.h.room_notes)}</div>` : ''}</td>
+        <td>${esc(r.payer)}</td>${hotelCell(r, 'jerusalem')}${hotelCell(r, 'telaviv')}<td class="num"><strong>${money(r.total)}</strong>${r.hotels.every(x => x.priced) ? '' : '<div class="muted">some rooms unpriced</div>'}</td></tr>`).join('')
+        || '<tr><td colspan="5" class="muted">No families match.</td></tr>'}
+    </tbody></table></div>`;
+  const si = $('rmSearch'); si.oninput = () => { RM.q = si.value; const pos = si.selectionStart; renderRooms(); const n = $('rmSearch'); n.focus(); n.setSelectionRange(pos, pos); };
+  pan.querySelectorAll('[data-rmb]').forEach(b => b.onclick = () => { RM.basis = b.dataset.rmb; renderRooms(); });
+  pan.querySelectorAll('[data-rmq]').forEach(b => b.onclick = () => { RM.q = b.dataset.rmq; renderRooms(); });
+  $('rmSave').onclick = async () => {
+    const rates = [...pan.querySelectorAll('.rr-in')].map(i => ({ hotel: i.dataset.hk, room_type: i.dataset.t, nightly: i.value.trim() }));
+    if (rates.some(r => r.nightly !== '' && !(Number(r.nightly) >= 0))) { $('rmStatus').textContent = 'Rates need to be numbers.'; return; }
+    $('rmSave').disabled = true; $('rmStatus').textContent = 'Saving…';
+    try { await rpc('admin_save_room_rates', { passcode: PASS, rates }); await load(); toast('Rates saved'); }
+    catch (e) { $('rmStatus').textContent = 'Didn’t save: ' + e.message; }
+    finally { const b = $('rmSave'); if (b) b.disabled = false; }
+  };
+  $('rmExport').onclick = () => {
+    const out = [['Family', 'Attending', 'Who pays', 'Hotel', 'Room type', 'Who in room', 'Nights', 'Nights estimated', 'Nightly rate', 'Cost', 'Adjoining', 'Room notes']];
+    rows.forEach(r => r.hotels.forEach(x => x.lines.forEach(l => out.push([r.i.label, r.h.attending, r.payer, HOTEL[x.hk].full, l.type || NOT_CHOSEN, l.who, x.nights, x.est ? 'yes' : '', l.rate ?? '', l.cost == null ? '' : l.cost.toFixed(2), r.h.rooms_adjoining || '', r.h.room_notes || '']))));
+    download('robbie-hotel-rooms.csv', csv(out));
   };
 }
 
@@ -724,8 +850,8 @@ function detailHtml(i) {
       </div>
       <h4>Party</h4><ul>${h.members.map(m => `<li>${esc(m.full_name)}${m.is_child ? ` (${m.age ?? '?'})` : ''}${m.email ? ' · ' + esc(m.email) : ''}${m.phone ? ' · ' + esc(m.phone) : ''}</li>`).join('')}</ul>
       <div class="grid">
-        <div><h4>King David</h4>${h.hotel_jerusalem || '—'}${(rr.jerusalem || []).length ? '<ul>' + rr.jerusalem.map(r => `<li>${esc(r.type || 'type?')}${r.who ? ' · ' + esc(r.who) : ''}</li>`).join('') + '</ul>' : ''}</div>
-        <div><h4>InterContinental</h4>${h.hotel_telaviv || '—'}${(rr.telaviv || []).length ? '<ul>' + rr.telaviv.map(r => `<li>${esc(r.type || 'type?')}${r.who ? ' · ' + esc(r.who) : ''}</li>`).join('') + '</ul>' : ''}</div>
+        <div><h4>King David</h4>${roomsDetail(i, 'jerusalem')}</div>
+        <div><h4>InterContinental</h4>${roomsDetail(i, 'telaviv')}</div>
         <div><h4>Rooms</h4>Adjoining: ${h.rooms_adjoining || '—'}${h.room_notes ? '<br>' + esc(h.room_notes) : ''}</div>
       </div>
       <h4>Events</h4><ul>${inOrder(h.events).filter(r => r.choice !== 'none').map(r => ev[r.event_id] ? `<li>${ev[r.event_id].emoji} ${fmt(ev[r.event_id].event_date)} ${esc(ev[r.event_id].title)}: ${r.adults} adults, ${r.kids} kids</li>` : '').join('') || '<li>None</li>'}</ul>
