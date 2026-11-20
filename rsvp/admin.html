@@ -109,6 +109,52 @@
   .rm-rates table td { padding: 6px 8px; }
   ul.rm-lines { margin: 4px 0 0; padding-left: 18px; font-size: 16px; }
   table.rm td { font-size: 16px; }
+  /* event chart */
+  .ec-wrap { overflow: auto; max-height: 78vh; border-radius: var(--radius); box-shadow: var(--shadow); background: #fff; }
+  table.ec { border-collapse: separate; border-spacing: 0; width: max-content; min-width: 100%; }
+  table.ec th, table.ec td { border-bottom: 1px solid var(--line); }
+  table.ec th.ev { min-width: 92px; max-width: 100px; font-size: 12px; letter-spacing: .02em; text-transform: none; white-space: normal; vertical-align: bottom; text-align: center; line-height: 1.25; padding: 8px 6px; z-index: 2; }
+  table.ec th.ev .d { display: block; color: var(--gold-text); font-weight: 700; text-transform: uppercase; margin-top: 2px; }
+  table.ec th.ev .em { display: block; font-size: 18px; }
+  table.ec .fam { position: sticky; left: 0; background: #fff; z-index: 1; min-width: 230px; max-width: 260px; box-shadow: 1px 0 0 var(--line); }
+  table.ec th.fam { z-index: 3; background: var(--olive-pale); vertical-align: bottom; }
+  table.ec .fam .nm { font-family: var(--display); font-size: 19px; line-height: 1.2; }
+  table.ec .fam select { margin-top: 6px; min-height: 0; padding: 4px 8px; font-size: 14px; width: auto; }
+  table.ec td.c { padding: 4px; text-align: center; vertical-align: middle; }
+  table.ec tfoot td { position: sticky; bottom: 0; background: var(--olive-pale); font-family: var(--label); font-weight: 700; font-size: 13px; text-align: center; z-index: 1; }
+  table.ec tfoot td.fam { z-index: 3; background: var(--olive-pale); text-align: left; }
+  table.ec tfoot .mb { display: block; color: var(--gold-text); font-weight: 600; }
+  .cell { display: block; width: 100%; min-width: 80px; min-height: 42px; border-radius: 6px; border: 1.5px solid var(--line); background: #fff; font-family: var(--label); font-weight: 700; font-size: 14px; color: var(--ink-soft); cursor: pointer; padding: 4px; line-height: 1.15; }
+  .cell small { display: block; font-weight: 600; font-size: 11px; opacity: .8; }
+  .cell:hover { outline: 2px solid var(--olive); }
+  .cell.all { background: #e8f0de; border-color: var(--ok); color: var(--ok); }
+  .cell.some { background: #f6efe3; border-color: var(--gold); color: var(--gold-text); }
+  .cell.na { border-style: dashed; background: var(--stone); cursor: default; opacity: .5; }
+  .cell.na:hover { outline: 0; }
+  table.ec td.note { color: var(--ink-soft); font-size: 15px; padding: 12px; }
+  .pop-bg { position: fixed; inset: 0; background: rgba(35,38,26,.35); z-index: 20; display: flex; align-items: center; justify-content: center; padding: 16px; }
+  .pop { background: var(--paper); border-radius: var(--radius); box-shadow: 0 10px 40px rgba(0,0,0,.25); padding: 22px; width: min(440px, 100%); }
+  .pop h3 { font-family: var(--display); font-weight: 400; font-size: 24px; margin: 0; }
+  .pop .opts { display: grid; gap: 8px; margin: 16px 0; }
+  .pop .opts .seg { text-align: left; }
+  .stepper { display: flex; align-items: center; gap: 10px; margin: 8px 0; font-family: var(--label); font-weight: 600; }
+  .stepper span.l { flex: 1; }
+  .stepper button { width: 42px; height: 42px; border-radius: 8px; border: 2px solid var(--olive); background: #fff; color: var(--olive); font-size: 22px; font-weight: 700; cursor: pointer; }
+  .stepper output { min-width: 34px; text-align: center; font-size: 20px; }
+  .pop .acts { display: flex; gap: 10px; margin-top: 16px; flex-wrap: wrap; }
+  /* flights editor */
+  table.pp td { font-size: 16px; }
+  .fl-card { border: 1.5px solid var(--line); border-radius: 8px; padding: 12px 14px; margin: 10px 0; background: #fff; }
+  .fl-grid { display: grid; grid-template-columns: 150px 1fr 120px 160px 120px 1.3fr; gap: 8px 10px; align-items: end; }
+  .fl-grid label { font-size: 12px; margin: 0 0 3px; }
+  .fl-grid input, .fl-grid select, .fl-sel select { min-height: 0; padding: 6px 8px; font-size: 15px; }
+  .fl-who { display: flex; flex-wrap: wrap; gap: 6px 16px; margin-top: 10px; }
+  .fl-who label { display: flex; align-items: center; gap: 6px; text-transform: none; letter-spacing: 0; font-family: var(--body); font-weight: 400; font-size: 16px; margin: 0; }
+  .fl-who input { width: 20px; height: 20px; }
+  .fl-sel { display: flex; flex-wrap: wrap; gap: 10px 20px; }
+  .fl-sel label { font-size: 12px; }
+  @media (max-width: 900px) { .fl-grid { grid-template-columns: 1fr 1fr; } }
+  @media (max-width: 600px) { table.ec .fam { min-width: 130px; max-width: 150px; } table.ec .fam .nm { font-size: 16px; } table.ec th.ev { min-width: 78px; } .cell { min-width: 68px; } }
   .toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: var(--ink); color: #fff; padding: 12px 20px; border-radius: 8px; font-family: var(--label); display: none; z-index: 10; }
 </style>
 </head>
@@ -131,15 +177,17 @@
     <div class="tabs" role="tablist">
       <button class="tab" data-tab="overview" aria-selected="true">Overview</button>
       <button class="tab" data-tab="events">Headcounts</button>
+      <button class="tab" data-tab="chart">Event chart</button>
       <button class="tab" data-tab="pricing">Pricing</button>
       <button class="tab" data-tab="rooms">Hotel rooms</button>
       <button class="tab" data-tab="invites">Invites &amp; links</button>
-      <button class="tab" data-tab="flights">Arrivals</button>
+      <button class="tab" data-tab="flights">Flights &amp; VIP</button>
       <button class="tab" data-tab="responses">Responses</button>
     </div>
 
     <div data-panel="overview"></div>
     <div data-panel="events" class="hidden"></div>
+    <div data-panel="chart" class="hidden"></div>
     <div data-panel="pricing" class="hidden"></div>
     <div data-panel="rooms" class="hidden"></div>
     <div data-panel="flights" class="hidden"></div>
@@ -198,6 +246,7 @@
   </div>
 </main>
 <div class="toast" id="toast"></div>
+<div class="pop-bg hidden" id="popBg"><div class="pop" id="pop" role="dialog" aria-modal="true"></div></div>
 
 <script>
 const SUPABASE_URL = 'https://khzwtkdzeygvbodtkovr.supabase.co';
@@ -245,7 +294,7 @@ function statusText(i) {
 function people(h) { const m = h ? h.members : []; return { a: m.filter(x => !x.is_child).length, k: m.filter(x => x.is_child).length }; }
 
 /* ---------- change log ---------- */
-const KIND = { new: 'sent their RSVP', update: 'made changes', flights: 'updated flights' };
+const KIND = { new: 'sent their RSVP', update: 'made changes', flights: 'updated flights', admin: 'changed from the admin page' };
 function fmtWhen(ts) { return new Date(ts).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }); }
 function changesFor(id) { return (DATA.changes || []).filter(c => c.invite_id === id); }
 function changeItem(c, withName) {
@@ -256,7 +305,7 @@ function changeItem(c, withName) {
 }
 function renderAll() {
   $('inv_events').innerHTML = DATA.events.map(e => `<label><input type="checkbox" class="inv-ev" value="${e.id}"> ${e.emoji} ${fmt(e.event_date)} · ${esc(e.title)}</label>`).join('');
-  renderOverview(); renderEvents(); renderPricing(); renderRooms(); renderInvites(); renderFlights(); renderResponses();
+  renderOverview(); renderEvents(); renderChart(); renderPricing(); renderRooms(); renderInvites(); renderFlights(); renderResponses();
 }
 $('inv_type').onchange = () => { $('inv_events_wrap').classList.toggle('hidden', $('inv_type').value !== 'events'); if (DATA) invPreview(); };
 function evNames(ids) { return DATA.events.filter(e => ids.includes(e.id)).map(e => e.title); }
@@ -383,6 +432,113 @@ function renderEvents() {
   });
   $$panel('events').innerHTML = html + '</tbody></table></div>';
   $('hcCost').onchange = (ev) => { SHOW_COST = ev.target.checked; renderEvents(); };
+}
+
+/* ---------- event chart: every family x every event, editable ---------- */
+const EC = { f: 'coming', q: '' };
+const shortDate = (iso) => new Date(iso + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+function ecEvents() { return DATA.events.filter(e => e.active !== false); }
+function ecRows() {
+  const q = EC.q.trim().toLowerCase();
+  return DATA.invites.filter(i => {
+    const s = rsStatus(i);
+    const ok = EC.f === 'all' || (EC.f === 'coming' ? (s === 'yes' || s === 'maybe') : s === EC.f);
+    return ok && (!q || q.split(/\s+/).every(w => rsHay(i).includes(w)));
+  }).sort((a, b) => a.label.localeCompare(b.label));
+}
+function ecResp(i, eid) { return (i.household.events || []).find(r => r.event_id === eid) || { choice: 'none', adults: 0, kids: 0 }; }
+function ecCell(i, e) {
+  const lim = i.invite_type === 'events';
+  if (lim && !(i.event_ids || []).includes(e.id)) return `<td class="c"><span class="cell na" title="Not on their invite">n/a</span></td>`;
+  const r = ecResp(i, e.id), p = people(i.household), n = r.adults + r.kids;
+  let cls = '', txt = '—';
+  if (r.choice !== 'none' && n > 0) {
+    if (!lim && r.adults === p.a && r.kids === p.k) { cls = 'all'; txt = `All ${n}`; }
+    else { cls = 'some'; txt = lim ? `${n}` : `${n} of ${p.a + p.k}`; }
+    txt += `<small>${r.adults}A${r.kids ? ' · ' + r.kids + 'K' : ''}</small>`;
+  }
+  return `<td class="c"><button class="cell ${cls}" data-ec="${i.id}|${e.id}" title="${esc(i.label)} · ${esc(e.title)}">${txt}</button></td>`;
+}
+function renderChart() {
+  const evs = ecEvents(), rows = ecRows(), all = DATA.invites;
+  const count = (f) => all.filter(i => f === 'all' ? true : f === 'coming' ? ['yes', 'maybe'].includes(rsStatus(i)) : rsStatus(i) === f).length;
+  const btn = (f, label) => `<button class="seg${EC.f === f ? ' on' : ''}" data-ecf="${f}">${label} <span class="cnt">${count(f)}</span></button>`;
+  const panel = $$panel('chart');
+  const wrapOld = panel.querySelector('.ec-wrap'), sx = wrapOld ? wrapOld.scrollLeft : 0, sy = wrapOld ? wrapOld.scrollTop : 0;
+  const hadFocus = document.activeElement && document.activeElement.id === 'ecSearch';
+  let body = '';
+  rows.forEach(i => {
+    const h = i.household, s = rsStatus(i);
+    const sel = h ? `<select data-ecatt="${i.id}" aria-label="Attending">${[['yes', '✅ Yes'], ['maybe', '🤔 Maybe'], ['no', '❌ Can’t come']].map(([v, l]) => `<option value="${v}"${h.attending === v ? ' selected' : ''}>${l}</option>`).join('')}</select>` : '';
+    const fam = `<td class="fam"><div class="nm">${esc(i.label)}</div>${i.invite_type === 'events' ? '<div class="muted">event-only</div>' : (h ? `<div class="muted">${(p => `${p.a + p.k} people · ${p.a}A/${p.k}K`)(people(h))}</div>` : '')}${sel}</td>`;
+    if (!h) body += `<tr>${fam}<td class="note" colspan="${evs.length}">⏳ Hasn’t answered yet. To fill it in for them, <a href="${link(i.code)}" target="_blank" rel="noopener">open their RSVP</a>. Once it’s sent you can change anything here.</td></tr>`;
+    else if (s === 'no') body += `<tr>${fam}<td class="note" colspan="${evs.length}">Can’t come. Switch them to Yes or Maybe on the left to pick their events.</td></tr>`;
+    else body += `<tr>${fam}${evs.map(e => ecCell(i, e)).join('')}</tr>`;
+  });
+  const foot = evs.map(e => {
+    let y = 0, m = 0;
+    rows.forEach(i => { const h = i.household; if (!h || h.attending === 'no') return; const r = ecResp(i, e.id); if (r.choice === 'none') return; h.attending === 'yes' ? y += r.adults + r.kids : m += r.adults + r.kids; });
+    return `<td>${y}${m ? `<span class="mb">+${m} maybe</span>` : ''}</td>`;
+  }).join('');
+  panel.innerHTML = `
+    <div class="rs-bar">
+      <input type="search" id="ecSearch" placeholder="Search a family or person" value="${esc(EC.q)}">
+      <div class="segs">${btn('coming', 'Yes + Maybe')}${btn('yes', '✅ Yes')}${btn('maybe', '🤔 Maybe')}${btn('waiting', '⏳ Waiting')}${btn('no', '❌ Can’t come')}${btn('all', 'Everyone')}</div>
+      <p class="muted" style="margin:10px 0 0">Tap any box to change who’s going to that event. Change Yes / Maybe / Can’t come on the left. Families can still make changes from their own link, and every change here shows in their History.</p>
+    </div>
+    <div class="ec-wrap"><table class="ec"><thead><tr><th class="fam">Family</th>${evs.map(e => `<th class="ev"><span class="em">${e.emoji}</span>${esc(e.title)}<span class="d">${shortDate(e.event_date)}</span></th>`).join('')}</tr></thead>
+      <tbody>${body || `<tr><td class="note" colspan="${evs.length + 1}">No families match.</td></tr>`}</tbody>
+      <tfoot><tr><td class="fam">Total people <span class="muted">(these rows)</span></td>${foot}</tr></tfoot></table></div>`;
+  const w = panel.querySelector('.ec-wrap'); w.scrollLeft = sx; w.scrollTop = sy;
+  const si = $('ecSearch'); si.oninput = () => { EC.q = si.value; const pos = si.selectionStart; renderChart(); const n = $('ecSearch'); n.focus(); n.setSelectionRange(pos, pos); };
+  if (hadFocus) si.focus();
+  panel.querySelectorAll('[data-ecf]').forEach(b => b.onclick = () => { EC.f = b.dataset.ecf; renderChart(); });
+  panel.querySelectorAll('[data-ec]').forEach(b => b.onclick = () => { const [iid, eid] = b.dataset.ec.split('|'); ecOpen(iid, eid); });
+  panel.querySelectorAll('[data-ecatt]').forEach(sel => sel.onchange = async () => {
+    const i = DATA.invites.find(x => x.id === sel.dataset.ecatt);
+    try { await rpc('admin_set_attending', { passcode: PASS, iid: i.id, att: sel.value }); await load(); toast(`${i.label}: saved`); }
+    catch (e) { toast(e.message); renderChart(); }
+  });
+}
+function popClose() { $('popBg').classList.add('hidden'); $('pop').innerHTML = ''; }
+$('popBg').addEventListener('click', (e) => { if (e.target.id === 'popBg') popClose(); });
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !$('popBg').classList.contains('hidden')) popClose(); });
+function ecOpen(iid, eid) {
+  const i = DATA.invites.find(x => x.id === iid), e = DATA.events.find(x => x.id === eid), lim = i.invite_type === 'events';
+  const p = people(i.household), r = ecResp(i, eid);
+  const st = { pick: r.choice === 'none' || r.adults + r.kids === 0 ? 'none' : (!lim && r.adults === p.a && r.kids === p.k ? 'all' : 'some'), a: r.adults, k: r.kids };
+  if (st.pick !== 'some') { st.a = lim ? Math.max(1, r.adults) : p.a; st.k = lim ? r.kids : p.k; }
+  const maxA = lim ? 30 : p.a, maxK = lim ? 30 : p.k;
+  const draw = () => {
+    const names = i.household.members.map(m => m.full_name);
+    $('pop').innerHTML = `<h3>${e.emoji} ${esc(e.title)}</h3><p class="muted" style="margin:4px 0 0">${fmt(e.event_date)} · <strong>${esc(i.label)}</strong>${!lim && names.length ? '<br>' + esc(names.join(', ')) : ''}</p>
+      <div class="opts">
+        ${lim ? '' : `<button class="seg${st.pick === 'all' ? ' on' : ''}" data-pk="all">Everyone (${p.a + p.k})</button>`}
+        <button class="seg${st.pick === 'some' ? ' on' : ''}" data-pk="some">${lim ? 'Coming' : 'Some of them'}</button>
+        <button class="seg${st.pick === 'none' ? ' on' : ''}" data-pk="none">Not going</button>
+      </div>
+      ${st.pick === 'some' ? `
+        <div class="stepper"><span class="l">Adults${lim ? '' : ` <span class="muted">(of ${p.a})</span>`}</span><button data-st="a-">−</button><output>${st.a}</output><button data-st="a+">+</button></div>
+        <div class="stepper"><span class="l">Kids${lim ? '' : ` <span class="muted">(of ${p.k})</span>`}</span><button data-st="k-">−</button><output>${st.k}</output><button data-st="k+">+</button></div>` : ''}
+      <div class="acts"><button class="btn" id="ecSave">Save</button><button class="btn secondary" id="ecCancel">Cancel</button></div>
+      <p class="form-error hidden" id="ecErr"></p>`;
+    $('pop').querySelectorAll('[data-pk]').forEach(b => b.onclick = () => { st.pick = b.dataset.pk; if (st.pick === 'some' && st.a + st.k === 0) { st.a = Math.min(1, maxA); } draw(); });
+    $('pop').querySelectorAll('[data-st]').forEach(b => b.onclick = () => {
+      const [w, d] = [b.dataset.st[0], b.dataset.st[1]];
+      st[w] = Math.max(0, Math.min(w === 'a' ? maxA : maxK, st[w] + (d === '+' ? 1 : -1))); draw();
+    });
+    $('ecCancel').onclick = popClose;
+    $('ecSave').onclick = async () => {
+      $('ecSave').disabled = true;
+      try {
+        await rpc('admin_set_event_response', { passcode: PASS, iid, ev_id: eid, pick: st.pick, n_adults: st.a, n_kids: st.k });
+        popClose(); await load(); toast(`${i.label} · ${e.title}: saved`);
+      } catch (err) { $('ecErr').textContent = err.message; $('ecErr').classList.remove('hidden'); $('ecSave').disabled = false; }
+    };
+  };
+  draw();
+  $('popBg').classList.remove('hidden');
+  setTimeout(() => { const b = $('pop').querySelector('.seg.on'); if (b) b.focus(); }, 0);
 }
 
 /* ---------- pricing: per-person prices and who owes what ---------- */
@@ -780,7 +936,8 @@ function renderFlights() {
       <div class="tile"><div class="n">${dep.reduce((s, l) => s + l.n, 0)}</div><div class="l">People with a departing flight</div></div>
       <div class="tile"><div class="n">${coming.filter(i => i.household.wants_transfer === 'yes').length}</div><div class="l">Families wanting VIP &amp; transfers</div></div>
     </div>
-    <p class="muted">Families add or change flights themselves from their own link, even after their RSVP is locked. Times are local Israel times as the family entered them.</p>
+    <p class="muted">Families add or change flights from their own link, or you can enter them for a family below. Times are local Israel times.</p>
+    ${flSection()}
     <section class="card"><h2><span class="ico">✈️</span> Arrivals</h2>${legTable(arr, 'arrive')}</section>
     <section class="card"><h2><span class="ico">🛫</span> Departures</h2>${legTable(dep, 'depart')}</section>
     <section class="card"><h2><span class="ico">⏳</span> No flights entered yet</h2>
@@ -790,6 +947,110 @@ function renderFlights() {
     <section class="card"><h2><span class="ico">⬇️</span> Export</h2>
       <p class="muted">One row per flight, for the planner or the transfer company.</p>
       <button class="btn secondary" onclick="exportFlights()">Flights spreadsheet</button></section>`;
+  flWire($$panel('flights'));
+}
+/* ---------- flights editor: per family, drilled down to each person ---------- */
+const FL = { q: '', open: new Set(), draft: {} };
+const onLeg = (l, name) => l.everyone || (l.who || []).includes(name);
+function flFamilies() {
+  const q = FL.q.trim().toLowerCase();
+  return DATA.invites.filter(i => i.invite_type !== 'events' && i.household && i.household.attending !== 'no')
+    .filter(i => !q || q.split(/\s+/).every(w => rsHay(i).includes(w))).sort((a, b) => a.label.localeCompare(b.label));
+}
+function flDraft(i) {
+  if (!FL.draft[i.id]) {
+    const h = i.household, names = h.members.map(m => m.full_name);
+    FL.draft[i.id] = { booked: h.flights_booked || '', transfer: h.wants_transfer || '', notes: h.flight_notes || '',
+      legs: (h.flight_legs || []).map(l => ({ dir: l.dir, airline: l.airline || '', number: l.number || '', date: l.date || '', time: l.time || '', airport: l.airport || '',
+        who: l.everyone ? names.slice() : (l.who || []).slice() })) };
+  }
+  return FL.draft[i.id];
+}
+function legShort(l) { return `${fmt(l.date) || 'No date'}${l.time ? ' ' + fmtTime(l.time) : ''} · ${esc([l.airline, l.number].filter(Boolean).join(' ') || '—')}${l.airport ? ` <span class="muted">${l.dir === 'arrive' ? 'from' : 'to'} ${esc(l.airport)}</span>` : ''}`; }
+function flSummary(i) {
+  const h = i.household, legs = h.flight_legs || [], n = h.members.length;
+  const inN = h.members.filter(m => legs.some(l => l.dir === 'arrive' && onLeg(l, m.full_name))).length;
+  const outN = h.members.filter(m => legs.some(l => l.dir === 'depart' && onLeg(l, m.full_name))).length;
+  return `${inN} of ${n} arriving · ${outN} of ${n} leaving${h.wants_transfer === 'yes' ? ' · wants VIP' : ''}`;
+}
+function flBody(i) {
+  const h = i.household, d = flDraft(i), names = h.members.map(m => m.full_name), legs = h.flight_legs || [];
+  const per = h.members.map(m => {
+    const a = legs.filter(l => l.dir === 'arrive' && onLeg(l, m.full_name)), b = legs.filter(l => l.dir === 'depart' && onLeg(l, m.full_name));
+    return `<tr><td><strong>${esc(m.full_name)}</strong>${m.is_child ? ` <span class="muted">(${m.age ?? 'child'})</span>` : ''}</td>
+      <td>${a.map(legShort).join('<br>') || '<span class="muted">—</span>'}</td><td>${b.map(legShort).join('<br>') || '<span class="muted">—</span>'}</td></tr>`;
+  }).join('');
+  const sel = (f, opts, v) => `<select data-fls="${i.id}|${f}">${opts.map(([k, l]) => `<option value="${k}"${v === k ? ' selected' : ''}>${l}</option>`).join('')}</select>`;
+  const card = (l, x) => `<div class="fl-card">
+      <div class="fl-grid">
+        <div><label>Direction</label><select data-fl="${i.id}|${x}|dir"><option value="arrive"${l.dir === 'arrive' ? ' selected' : ''}>✈️ Arriving</option><option value="depart"${l.dir === 'depart' ? ' selected' : ''}>🛫 Leaving</option></select></div>
+        <div><label>Airline</label><input type="text" maxlength="60" data-fl="${i.id}|${x}|airline" value="${esc(l.airline)}" placeholder="e.g. El Al"></div>
+        <div><label>Flight #</label><input type="text" maxlength="12" data-fl="${i.id}|${x}|number" value="${esc(l.number)}" placeholder="LY8"></div>
+        <div><label>${l.dir === 'arrive' ? 'Lands' : 'Takes off'} (date)</label><input type="date" min="2027-03-01" max="2027-06-30" data-fl="${i.id}|${x}|date" value="${esc(l.date)}"></div>
+        <div><label>Time</label><input type="time" data-fl="${i.id}|${x}|time" value="${esc(l.time)}"></div>
+        <div><label>${l.dir === 'arrive' ? 'Flying from' : 'Flying to'}</label><input type="text" maxlength="60" data-fl="${i.id}|${x}|airport" value="${esc(l.airport)}" placeholder="e.g. JFK"></div>
+      </div>
+      <div class="fl-who"><span class="muted">Who’s on it:</span>${names.map(n => `<label><input type="checkbox" data-flw="${i.id}|${x}" value="${esc(n)}"${l.who.includes(n) ? ' checked' : ''}> ${esc(n)}</label>`).join('')}
+        <button class="small-btn linkish" data-flall="${i.id}|${x}">All</button><span class="spacer" style="flex:1"></span><button class="small-btn danger" data-fldel="${i.id}|${x}">Remove flight</button></div>
+    </div>`;
+  return `<div class="hh-body">
+    <h4>By person</h4><div class="tablewrap"><table class="pp"><thead><tr><th>Person</th><th>✈️ Arriving</th><th>🛫 Leaving</th></tr></thead><tbody>${per}</tbody></table></div>
+    <h4>Edit flights</h4>
+    <div class="fl-sel">
+      <div><label>Flights booked</label>${sel('booked', [['', '—'], ['yes', 'Yes, all of them'], ['some', 'Some of them'], ['no', 'Not yet']], d.booked)}</div>
+      <div><label>VIP &amp; transfers</label>${sel('transfer', [['', '—'], ['yes', 'Yes, please book'], ['no', 'No, they’ll handle it'], ['unsure', 'Not sure yet']], d.transfer)}</div>
+    </div>
+    ${d.legs.map(card).join('') || '<p class="muted">No flights entered.</p>'}
+    <button class="small-btn" data-fladd="${i.id}|arrive">+ Arriving flight</button><button class="small-btn" data-fladd="${i.id}|depart">+ Leaving flight</button>
+    <label style="margin-top:12px">Flight notes</label><textarea data-fls="${i.id}|notes" rows="2" maxlength="1000">${esc(d.notes)}</textarea>
+    <div style="margin-top:12px"><button class="btn" data-flsave="${i.id}">Save flights</button> <button class="btn secondary" data-flreset="${i.id}">Undo my edits</button></div>
+    <p class="form-error hidden" id="flErr-${i.id}"></p>
+  </div>`;
+}
+function flSection() {
+  const fams = flFamilies();
+  return `<section class="card"><h2><span class="ico">👥</span> Each family’s flights, person by person</h2>
+    <p class="muted">Open a family to see who’s on which flight and to enter or fix flights for them. Their own link shows the same flights.</p>
+    <input type="search" id="flSearch" placeholder="Search a family or person" value="${esc(FL.q)}" style="max-width:none;margin-bottom:12px">
+    <div class="fl-list">${fams.map(i => `<details class="rs-row" data-flid="${i.id}"${FL.open.has(i.id) ? ' open' : ''}>
+      <summary><span class="rs-name">${esc(i.label)}</span><span class="rs-st st-${i.household.attending}">${RS_STATUS[i.household.attending]}</span>
+        <span class="rs-sum muted">${flSummary(i)}${FL.draft[i.id] ? ' · <strong>unsaved edits</strong>' : ''}</span><span class="acc-i" aria-hidden="true"></span></summary>
+      ${FL.open.has(i.id) ? flBody(i) : ''}</details>`).join('') || '<p class="muted">No families match.</p>'}</div></section>`;
+}
+function flWire(panel) {
+  const si = $('flSearch'); if (si) si.oninput = () => { FL.q = si.value; const pos = si.selectionStart; renderFlights(); const n = $('flSearch'); n.focus(); n.setSelectionRange(pos, pos); };
+  const redraw = (iid) => { const d = panel.querySelector(`[data-flid="${iid}"]`); const b = d.querySelector('.hh-body'); if (b) b.outerHTML = flBody(DATA.invites.find(x => x.id === iid)); };
+  panel.querySelectorAll('[data-flid]').forEach(d => d.addEventListener('toggle', () => {
+    const id = d.dataset.flid; if (d.open) { FL.open.add(id); if (!d.querySelector('.hh-body')) d.insertAdjacentHTML('beforeend', flBody(DATA.invites.find(x => x.id === id))); } else FL.open.delete(id);
+  }));
+  const list = panel.querySelector('.fl-list'); if (!list) return;
+  list.addEventListener('input', (e) => {
+    const t = e.target;
+    if (t.dataset.fl) { const [iid, x, f] = t.dataset.fl.split('|'); FL.draft[iid].legs[+x][f] = t.value; if (f === 'dir') redraw(iid); }
+    else if (t.dataset.fls) { const [iid, f] = t.dataset.fls.split('|'); FL.draft[iid][f] = t.value; }
+    else if (t.dataset.flw) { const [iid, x] = t.dataset.flw.split('|'); const l = FL.draft[iid].legs[+x]; l.who = t.checked ? [...new Set([...l.who, t.value])] : l.who.filter(n => n !== t.value); }
+  });
+  list.addEventListener('click', async (e) => {
+    const t = e.target.closest('button'); if (!t) return;
+    if (t.dataset.fladd) {
+      const [iid, dir] = t.dataset.fladd.split('|'), i = DATA.invites.find(x => x.id === iid), h = i.household;
+      FL.draft[iid].legs.push({ dir, airline: '', number: '', date: (dir === 'arrive' ? h.arrival_date : h.departure_date) || '', time: '', airport: '', who: h.members.map(m => m.full_name) }); redraw(iid);
+    } else if (t.dataset.fldel) { const [iid, x] = t.dataset.fldel.split('|'); FL.draft[iid].legs.splice(+x, 1); redraw(iid); }
+    else if (t.dataset.flall) { const [iid, x] = t.dataset.flall.split('|'); const i = DATA.invites.find(y => y.id === iid); FL.draft[iid].legs[+x].who = i.household.members.map(m => m.full_name); redraw(iid); }
+    else if (t.dataset.flreset) { delete FL.draft[t.dataset.flreset]; redraw(t.dataset.flreset); }
+    else if (t.dataset.flsave) {
+      const iid = t.dataset.flsave, i = DATA.invites.find(x => x.id === iid), d = FL.draft[iid], names = i.household.members.map(m => m.full_name), err = $('flErr-' + iid);
+      const legs = d.legs.filter(l => l.airline || l.number || l.date || l.time || l.airport);
+      const bad = legs.find(l => !l.number && !l.date) ? 'Each flight needs at least a flight number or a date.' : legs.find(l => !l.who.length) ? 'Pick who’s on each flight.' : '';
+      if (bad) { err.textContent = bad; err.classList.remove('hidden'); return; }
+      t.disabled = true;
+      try {
+        await rpc('admin_update_flights', { passcode: PASS, iid, booked: d.booked, notes: d.notes, transfer: d.transfer,
+          legs: legs.map(l => { const every = names.length > 0 && names.every(n => l.who.includes(n)); return { dir: l.dir, airline: l.airline, number: l.number, date: l.date, time: l.time, airport: l.airport, everyone: every, who: every ? [] : l.who.filter(n => names.includes(n)) }; }) });
+        delete FL.draft[iid]; await load(); toast(`${i.label}: flights saved`);
+      } catch (ex) { err.textContent = ex.message; err.classList.remove('hidden'); t.disabled = false; }
+    }
+  });
 }
 function exportFlights() {
   const rows = [['Direction', 'Date', 'Time', 'Airline', 'Flight', 'From / To', 'Family', 'Passengers', 'People', 'VIP & transfers', 'Contact', 'Phone', 'Email', 'Flights updated']];
