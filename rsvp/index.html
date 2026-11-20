@@ -108,7 +108,7 @@
       <p class="step-label">Step 2 of 6</p>
       <h2><span class="ico">👨‍👩‍👧‍👦</span> Who's in your party</h2>
       <div class="banner" id="partyFor"></div>
-      <p class="lede">List everyone traveling with you, including yourself. Add an email and mobile for anyone who has their own, kids included. Later, everyone with an email will get their own login to the trip app.</p>
+      <p class="lede">List everyone traveling with you, including yourself. We need an email and mobile number for every adult, and for any child who has their own. We’re building a trip app, and everyone will get their own login for the schedule, flights and updates.</p>
       <span class="label">Adults</span>
       <div id="adults"></div>
       <button type="button" class="add-btn" id="addAdult">＋ Add an adult</button>
@@ -424,8 +424,8 @@ function addPerson(isChild, data = {}, isYou = false) {
       ${isYou ? '<span></span>' : '<button type="button" class="icon-btn" aria-label="Remove">✕</button>'}
     </div>
     <div class="pc-contact">
-      <div><label>Email${isChild ? ' (if they have one)' : ''}</label><input type="email" class="p-email" maxlength="200" value="${esc(data.email)}"></div>
-      <div><label>Mobile${isChild ? ' (if they have their own)' : ''}</label><input type="tel" class="p-phone" maxlength="40" value="${esc(data.phone)}"></div>
+      <div><label>Email${isChild ? ' (if they have their own)' : ' <span class="req">*</span>'}</label><input type="email" class="p-email" maxlength="200" autocomplete="off" value="${esc(data.email)}"></div>
+      <div><label>Mobile${isChild ? ' (if they have their own)' : ' <span class="req">*</span>'}</label><input type="tel" class="p-phone" maxlength="40" autocomplete="off" value="${esc(data.phone)}"></div>
     </div>`;
   const rm = card.querySelector('.icon-btn');
   if (rm) rm.onclick = () => { card.remove(); updateParty(); };
@@ -739,6 +739,14 @@ function validateStep(name) {
     const you = document.querySelector('#adults .person-card[data-you] .p-name');
     if (you && !you.value.trim()) bad(you);
     document.querySelectorAll('.p-email').forEach(i => { if (i.value.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(i.value.trim())) bad(i); });
+    let missing = false;
+    document.querySelectorAll('#adults .person-card').forEach(c => {
+      if (!c.querySelector('.p-name').value.trim()) return;
+      const em = c.querySelector('.p-email'), ph = c.querySelector('.p-phone');
+      if (!em.value.trim()) { bad(em); missing = true; }
+      if (ph.value.replace(/\D/g, '').length < 7) { bad(ph); missing = true; }
+    });
+    if (missing) msg = 'Please add an email and mobile number for each adult, so everyone can log in to the trip app.';
     document.querySelectorAll('#kids .person-card').forEach(c => { if (c.querySelector('.p-name').value.trim() && c.querySelector('.p-age').value === '') bad(c.querySelector('.p-age')); });
   }
   if (name === 'dates') {

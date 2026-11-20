@@ -89,6 +89,7 @@
   .chg-list > .chg { padding: 10px 0; border-bottom: 1px solid var(--line); }
   .chg-list > .chg:last-child { border-bottom: 0; }
   .chg ul { margin: 4px 0 0; padding-left: 22px; }
+  .rs-plain { padding-left: 20px; } .rs-plain li { margin: 6px 0; }
   .toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: var(--ink); color: #fff; padding: 12px 20px; border-radius: 8px; font-family: var(--label); display: none; z-index: 10; }
 </style>
 </head>
@@ -272,6 +273,7 @@ function renderOverview() {
       <div class="tile"><div class="n">${eoResp.length} / ${eoInv.length}</div><div class="l">Event-only guests answered</div></div>
     </div>
     ${dupesHtml()}
+    ${missingContactHtml()}
     <section class="card"><h2><span class="ico">🔔</span> Recent changes</h2>
       <p class="muted">Families can change their RSVP anytime from their link. Every new RSVP and change shows up here, newest first.</p>
       <ul class="chg-list">${(DATA.changes || []).slice(0, 20).map(c => changeItem(c, true)).join('') || '<li class="muted">Nothing yet.</li>'}</ul>
@@ -282,6 +284,26 @@ function renderOverview() {
       <p class="muted">Spreadsheet files you can open in Excel or Google Sheets.</p>
       <button class="btn secondary" onclick="exportPeople()">Everyone (one row per person)</button>
       <button class="btn secondary" onclick="exportHouseholds()">Families + events</button></section>`;
+}
+function missingContactHtml() {
+  // For the trip app: every adult coming needs their own email and mobile
+  const rows = DATA.invites.filter(i => i.household && i.household.attending !== 'no' && i.invite_type !== 'events').map(i => {
+    const miss = i.household.members.filter(m => !m.is_child && (!m.email || String(m.phone || '').replace(/\D/g, '').length < 7))
+      .map(m => `${esc(m.full_name)} <span class="muted">(${[!m.email && 'email', String(m.phone || '').replace(/\D/g, '').length < 7 && 'mobile'].filter(Boolean).join(' & ')})</span>`);
+    return miss.length ? `<li><strong>${esc(i.label)}</strong>: ${miss.join(', ')} <button class="small-btn" data-copy="${i.code}">Copy link</button></li>` : '';
+  }).filter(Boolean);
+  let withC = 0, all = 0;
+  DATA.invites.forEach(i => { const h = i.household; if (!h || h.attending === 'no') return; h.members.forEach(m => { all++; if (m.email || m.phone) withC++; }); });
+  return `<section class="card"><h2><span class="ico">📇</span> Contact info for the trip app</h2>
+    <p class="muted">${withC} of ${all} people coming have their own email or mobile. Kids without their own phone are fine. The form now requires an email and mobile for every adult.</p>
+    ${rows.length ? `<h4>Adults missing an email or mobile</h4><ul class="rs-plain">${rows.join('')}</ul><p class="muted">They can add it themselves: send them their link and ask them to tap “Change my RSVP.”</p>` : '<p>Every adult who answered has an email and mobile.</p>'}
+    <button class="btn secondary" onclick="exportContacts()">Contacts spreadsheet</button></section>`;
+}
+function exportContacts() {
+  const rows = [['Family', 'Name', 'Adult/Child', 'Age', 'Email', 'Mobile', 'Attending']];
+  DATA.invites.forEach(i => { const h = i.household; if (!h || h.attending === 'no') return;
+    h.members.forEach(m => rows.push([i.label, m.full_name, m.is_child ? 'Child' : 'Adult', m.age, m.email, m.phone, h.attending])); });
+  download('robbie-contacts.csv', csv(rows));
 }
 function dupesHtml() {
   // Names repeat a lot in the family, so only match on things that are unique:
@@ -405,7 +427,7 @@ function invProblem() {
 }
 document.addEventListener('click', async (e) => {
   const t = e.target;
-  if (!t.closest || !t.closest('#invTable, .rs-list')) return;
+  if (!t.closest || !t.closest('#invTable, .rs-list, .rs-plain')) return;
   if (t.dataset.copy) { await copy(link(t.dataset.copy)); toast('Link copied'); }
   if (t.dataset.text) {
     const i = DATA.invites.find(x => x.id === t.dataset.text);
